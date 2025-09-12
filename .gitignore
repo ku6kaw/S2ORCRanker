@@ -1,0 +1,10 @@
+.env
+
+venv
+
+data/raw
+*.db
+
+__pycache__
+
+raw

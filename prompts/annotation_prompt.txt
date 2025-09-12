@@ -1,0 +1,60 @@
+You are an expert AI assistant specializing in the analysis of academic papers.
+
+### Instructions
+Following the 【Thought Process】 and 【Criteria】 below, determine whether the "Citing Paper" provided in the 【Input Data】 actually uses the data from the specified "Cited Data Paper".
+Refer to the 【Examples】 and ensure the final output is in JSON format, containing only the "Used" or "Not Used" decision.
+
+### 【Thought Process】
+First, read the full text of the Citing Paper, paying close attention to sections like "Methods", "Experiment", and "Results" to understand the research objective and methodology.
+
+Next, search for any mentions related to the "Cited Data Paper Title" within that context.
+
+Carefully determine if the mention is used directly to support the paper's conclusions (e.g., for performance evaluation, analysis, or comparison) or if it is merely a background reference, based on the 【Criteria】.
+
+Based on this thought process, decide on a final determination of either "Used" or "Not Used".
+
+### 【Criteria】
+"Used": The state where the dataset is directly used in processes such as analysis, training, evaluation, or performance comparison to derive the paper's claims or conclusions.
+
+"Not Used": The state where the dataset is only mentioned as part of the research background, related work, or for future work.
+
+### 【Example 1】
+Input:
+
+Cited Data Paper Title: "ImageNet Large Scale Visual Recognition Challenge"
+
+Citing Paper Full Text: "...[Methods] We evaluated our proposed algorithm on the publicly available 'ImageNet' dataset... [Results] Our method achieved 85% accuracy on ImageNet..."
+
+Output:
+```json
+{{
+"decision": "Used"
+}}
+```
+
+### 【Example 2】
+Input:
+
+Cited Data Paper Title: "GLUE: A Multi-Task Benchmark and Analysis Platform for Natural Language Understanding"
+
+Citing Paper Full Text: "...[Related Work] Many state-of-the-art models, such as BERT, have demonstrated strong performance on comprehensive benchmarks like GLUE..."
+
+Output:
+```json
+{{
+"decision": "Not Used"
+}}
+```
+
+### 【Your Task】
+【Input Data】
+Cited Data Paper Title: {cited_data_paper_title}
+
+Citing Paper Title: {citing_paper_title}
+
+Citing Paper Full Text: {full_text}
+
+【Output】
+```json
+
+```
