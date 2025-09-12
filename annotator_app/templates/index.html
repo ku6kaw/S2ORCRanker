@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotation Workbench</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Paper Annotation Workbench</h1>
+            <div id="progress-indicator">Loading...</div>
+        </header>
+
+        <!-- JavaScriptによってこの中身が動的に書き換えられる -->
+        <main id="annotation-view">
+            <p>Loading paper data...</p>
+        </main>
+
+        <footer>
+            <div class="controls">
+                <button id="btn-not-used" class="btn-annotation">❌ Not Used</button>
+                <button id="btn-used" class="btn-annotation">✅ Used</button>
+                <button id="btn-next">▶ Skip / Next</button>
+            </div>
+            <div class="aux-controls">
+                <button id="btn-copy-prompt">📋 Copy Prompt for LLM</button>
+            </div>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
