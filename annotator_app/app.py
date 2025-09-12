@@ -9,6 +9,9 @@ app = Flask(__name__)
 # --- パスの設定 ---
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'processed', 's2orc_filtered.db'))
 EVAL_DATAPAPERS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'datapapers', 'sampled', 'evaluation_data_papers.csv'))
+PROMPT_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'prompts', 'annotation_scoring_prompt_jp.txt'))
+
+
 
 # --- 評価用DOIリストの読み込み ---
 try:
@@ -94,6 +97,31 @@ def annotate():
         )
         conn.commit()
     return jsonify({"status": "success"})
+
+@app.route('/get_llm_prompt', methods=['POST'])
+def get_llm_prompt():
+    """
+    リクエストで受け取った論文情報を基に、
+    ファイルから読み込んだプロンプトをフォーマットして返すAPI
+    """
+    paper_data = request.json
+    try:
+        with open(PROMPT_FILE_PATH, 'r', encoding='utf-8') as f:
+            prompt_template = f.read()
+        
+        # --- 修正点: .format() の代わりに .replace() を使用 ---
+        # これにより、本文中の波括弧に影響されなくなる
+        prompt = prompt_template.replace("{cited_data_paper_title}", paper_data.get('cited_title', ''))
+        prompt = prompt.replace("{citing_paper_title}", paper_data.get('citing_title', ''))
+        # 長すぎる場合に備えて20000文字に制限
+        prompt = prompt.replace("{full_text}", paper_data.get('citing_text', '')[:20000])
+
+        return jsonify({"prompt": prompt})
+        
+    except FileNotFoundError:
+        return jsonify({"error": "Prompt file not found."}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # --- サーバー起動 ---
 if __name__ == '__main__':

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>PDF Embedding Test</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { border: none; width: 100%; height: 100%; }
+        .info { padding: 20px; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+
+    <div class="info">
+        <h1>PDF Embedding Test</h1>
+        <p>
+            以下のボックスにPDFが表示されれば、埋め込みは成功です。<br>
+            空白またはエラーメッセージが表示される場合、PDFサーバー側のセキュリティ設定(CORSポリシー)により、埋め込みがブロックされています。
+        </p>
+    </div>
+
+    <iframe src="https://doi.org/10.1016/j.dib.2021.107641">
+    </iframe>
+
+</body>
+</html>

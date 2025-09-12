@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mainView.innerHTML = '<h2>🎉 全ての論文のアノテーションが完了しました！</h2>';
             document.querySelector('footer').style.display = 'none';
         }
+        
     }
 
     function updateProgress(progressData) {
@@ -83,12 +84,37 @@ document.addEventListener('DOMContentLoaded', () => {
         btnNotUsed.disabled = false;
     }
     
-    function copyPrompt() {
+    async function copyPrompt() {
         if (!currentPaper) return;
-        const promptText = `この論文の要点を3行でまとめて。\n\nTitle: ${currentPaper.citing_paper_title}\n\nText: ${currentPaper.citing_paper_text.substring(0, 2000)}`;
-        navigator.clipboard.writeText(promptText).then(() => {
-            alert('Prompt copied to clipboard!');
-        });
+
+        try {
+            // バックエンドに現在の論文情報を送信し、整形されたプロンプトを要求
+            const response = await fetch('/get_llm_prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cited_title: currentPaper.cited_datapaper_title,
+                    citing_title: currentPaper.citing_paper_title,
+                    citing_text: currentPaper.citing_paper_text
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to get prompt from server.');
+            }
+
+            const data = await response.json();
+            
+            // サーバーから受け取ったプロンプトをクリップボードにコピー
+            navigator.clipboard.writeText(data.prompt).then(() => {
+                // alert('Prompt copied to clipboard!');
+                console.log('Prompt copied to clipboard!');
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert('Could not generate or copy the prompt.');
+        }
     }
 
     // --- イベントリスナーの設定 ---
