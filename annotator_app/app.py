@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # --- パスの設定 ---
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'processed', 's2orc_filtered.db'))
-EVAL_DATAPAPERS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'datapapers', 'sampled', 'evaluation_data_papers.csv'))
+EVAL_DATAPAPERS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'datapapers', 'sampled', 'evaluation_data_papers_50.csv'))
 PROMPT_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'prompts', 'annotation_scoring_prompt_jp.txt'))
 
 
