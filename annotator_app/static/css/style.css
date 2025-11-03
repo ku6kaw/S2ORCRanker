@@ -100,3 +100,20 @@ button:hover {
 }
 #btn-not-used:hover { background-color: #c82333; }
 
+/* データ論文の候補数を表示するPタグ */
+.context-paper p {
+    font-size: 0.9em;
+    color: #555;
+    font-weight: bold;
+}
+
+/* データ論文スキップボタンのスタイル */
+.btn-skip {
+    background-color: #ffc107;
+    color: #333;
+    border-color: #ffc107;
+    font-weight: bold;
+}
+.btn-skip:hover {
+    background-color: #e0a800;
+}

@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnNotUsed = document.getElementById('btn-not-used');
     const btnNext = document.getElementById('btn-next');
     const btnCopyPrompt = document.getElementById('btn-copy-prompt');
+    const btnSkipDataPaper = document.getElementById('btn-skip-datapaper');
 
     // --- 状態管理 ---
     let currentPaper = null;
@@ -21,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                       llmStatus === -1 ? '<span class="suggestion-not-used">Not Used</span>' :
                                       '<span>Unprocessed</span>';
             
-            // ▼▼▼ 修正点: PDFリンクがあればリンクを、なければメッセージを作成 ▼▼▼
             const pdfLinkHTML = paperData.pdf_url 
                 ? `<a href="${paperData.pdf_url}" target="_blank">Open PDF in New Tab</a>`
                 : '<span>No PDF link available</span>';
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mainView.innerHTML = `
                 <div class="context-paper">
                     <h3>Data Paper (D): ${paperData.cited_datapaper_title}</h3>
+                    <p><b>(Total 'Used' Candidates for this Data Paper: ${paperData.data_paper_total_candidates})</b></p>
                 </div>
                 <hr>
                 <div class="candidate-paper">
@@ -40,16 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <textarea readonly>${paperData.citing_paper_text}</textarea>
                 </div>
             `;
+            
         } else {
             mainView.innerHTML = '<h2>🎉 全ての論文のアノテーションが完了しました！</h2>';
             document.querySelector('footer').style.display = 'none';
         }
-        
     }
 
     function updateProgress(progressData) {
         const percentage = progressData.total > 0 ? (progressData.annotated / progressData.total * 100).toFixed(1) : 0;
-        progressIndicator.textContent = `Progress: ${progressData.annotated} / ${progressData.total} (${percentage}%)`;
+        progressIndicator.textContent = `[${progressData.mode}] Progress: ${progressData.annotated} / ${progressData.total} (${percentage}%)`;
     }
 
     async function getNextTask() {
@@ -64,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleAnnotation(decision) {
         if (!currentPaper) return;
-
         btnUsed.disabled = true;
         btnNotUsed.disabled = true;
 
@@ -84,13 +84,33 @@ document.addEventListener('DOMContentLoaded', () => {
         btnNotUsed.disabled = false;
     }
     
+    async function handleSkipDataPaper() {
+        if (!currentPaper) return;
+        
+        if (!confirm(`本当にこのデータ論文「${currentPaper.cited_datapaper_title}」の未確認候補をすべてスキップしますか？`)) {
+            return;
+        }
+
+        btnSkipDataPaper.disabled = true;
+        await fetch('/skip_datapaper', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cited_datapaper_doi: currentPaper.cited_datapaper_doi
+            })
+        });
+        
+        await getNextTask();
+        btnSkipDataPaper.disabled = false;
+    }
+
     async function copyPrompt() {
         if (!currentPaper) return;
 
         try {
-            // バックエンドに現在の論文情報を送信し、整形されたプロンプトを要求
             const response = await fetch('/get_llm_prompt', {
                 method: 'POST',
+                // ▼▼▼ 修正点: 'ContentType' を 'Content-Type' に修正 ▼▼▼
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cited_title: currentPaper.cited_datapaper_title,
@@ -105,15 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
             
-            // サーバーから受け取ったプロンプトをクリップボードにコピー
             navigator.clipboard.writeText(data.prompt).then(() => {
-                // alert('Prompt copied to clipboard!');
                 console.log('Prompt copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('コピーに失敗しました。\n(Error: ' + err.message + ')');
             });
 
         } catch (error) {
             console.error(error);
-            alert('Could not generate or copy the prompt.');
+            alert('プロンプトの生成に失敗しました。');
         }
     }
 
@@ -122,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNotUsed.addEventListener('click', () => handleAnnotation('not_used'));
     btnNext.addEventListener('click', getNextTask);
     btnCopyPrompt.addEventListener('click', copyPrompt);
+    btnSkipDataPaper.addEventListener('click', handleSkipDataPaper);
 
     // --- 初期化 ---
     getNextTask();

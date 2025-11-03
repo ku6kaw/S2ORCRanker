@@ -13,7 +13,6 @@
             <div id="progress-indicator">Loading...</div>
         </header>
 
-        <!-- JavaScriptによってこの中身が動的に書き換えられる -->
         <main id="annotation-view">
             <p>Loading paper data...</p>
         </main>
@@ -22,12 +21,17 @@
             <div class="controls">
                 <button id="btn-not-used" class="btn-annotation">❌ Not Used</button>
                 <button id="btn-used" class="btn-annotation">✅ Used</button>
-                <button id="btn-next">▶ Skip / Next</button>
+                <button id="btn-next">▶ Skip Paper</button>
             </div>
+            
             <div class="aux-controls">
-                <button id="btn-copy-prompt">📋 Copy Prompt for LLM</button>
+                <button id="btn-skip-datapaper" class="btn-skip">⏩ Skip This Entire Data Paper</button>
+                <button id="btn-copy-prompt">📋 Copy Prompt</button>
             </div>
         </footer>
+        
+        <div id="pdf-viewer-container">
+            </div>
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
