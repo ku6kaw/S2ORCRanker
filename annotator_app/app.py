@@ -47,21 +47,8 @@ def get_next_paper_to_annotate():
     paper = None
     with get_db_connection() as conn:
         
-        target_doi_list = ()
-        if ANNOTATION_MODE == "evaluation":
-            target_doi_list = EVAL_DOI_LIST
-        elif ANNOTATION_MODE == "training":
-            target_doi_list = TRAIN_DOI_LIST
-        elif ANNOTATION_MODE == "training_advanced":
-            target_doi_list = TRAIN_TOP20_DOI_LIST
-        
-        if not target_doi_list:
-            return None
-
-        # --- 汎用ロジック: 対象リストから未処理の候補を1件取得 ---
-        placeholders = ','.join('?' for _ in target_doi_list)
-        
-        query_common_part = f"""
+        # SQLクエリの共通部分（SELECT句とJOIN句）
+        query_common_part = """
             SELECT
                 pc.citing_doi, pc.cited_datapaper_doi, pc.cited_datapaper_title,
                 p.title AS citing_paper_title, ft.cleaned_text AS citing_paper_text,
@@ -81,15 +68,17 @@ def get_next_paper_to_annotate():
             ) AS cc ON pc.cited_datapaper_doi = cc.cited_datapaper_doi
             WHERE pc.human_annotation_status = 0 
               AND pc.llm_annotation_status = 1
-              AND pc.cited_datapaper_doi IN ({placeholders})
         """
         
-        if ANNOTATION_MODE == "evaluation" or ANNOTATION_MODE == "training_advanced":
-            query = query_common_part + " ORDER BY pc.cited_datapaper_doi, pc.citing_doi LIMIT 1;"
-            paper = conn.execute(query, target_doi_list).fetchone()
+        if ANNOTATION_MODE == "evaluation":
+            # --- 評価用ロジック ---
+            placeholders = ','.join('?' for _ in EVAL_DOI_LIST)
+            query = query_common_part + f" AND pc.cited_datapaper_doi IN ({placeholders}) ORDER BY pc.cited_datapaper_doi, pc.citing_doi LIMIT 1;"
+            paper = conn.execute(query, EVAL_DOI_LIST).fetchone()
             
         elif ANNOTATION_MODE == "training":
-            # 1. まだアンカー(human_status=1)がないDOIのリストを取得
+            # --- 訓練用(基本)ロジック ---
+            placeholders = ','.join('?' for _ in TRAIN_DOI_LIST)
             query_needs_anchor = f"""
                 SELECT cited_datapaper_doi
                 FROM positive_candidates
@@ -97,25 +86,40 @@ def get_next_paper_to_annotate():
                 GROUP BY cited_datapaper_doi
                 HAVING SUM(CASE WHEN human_annotation_status = 1 THEN 1 ELSE 0 END) = 0
             """
-            rows = conn.execute(query_needs_anchor, target_doi_list).fetchall()
+            rows = conn.execute(query_needs_anchor, TRAIN_DOI_LIST).fetchall()
             needs_anchor_dois = tuple([row[0] for row in rows])
 
             if not needs_anchor_dois:
                 paper = None
             else:
-                # 2. これらのDOIの中で、未確認(Human=0)かつLLM=Usedの候補を1件探す
                 placeholders_needs_anchor = ','.join('?' for _ in needs_anchor_dois)
-                query = query_common_part.replace(f"IN ({placeholders})", f"IN ({placeholders_needs_anchor})") + " ORDER BY pc.cited_datapaper_doi LIMIT 1;"
+                query = query_common_part + f" AND pc.cited_datapaper_doi IN ({placeholders_needs_anchor}) ORDER BY pc.cited_datapaper_doi LIMIT 1;"
                 paper = conn.execute(query, needs_anchor_dois).fetchone()
+        
+        # ▼▼▼ 修正点: 'training_advanced'のロジックを正しく実装 ▼▼▼
+        elif ANNOTATION_MODE == "training_advanced":
+            # --- 訓練用(追加)ロジック ---
+            for data_paper_doi in TRAIN_TOP20_DOI_LIST:
+                # 1. そのデータ論文の、人間が確認した「Used」の数をカウント
+                count_query = "SELECT COUNT(*) FROM positive_candidates WHERE cited_datapaper_doi = ? AND human_annotation_status = 1"
+                human_used_count = conn.execute(count_query, (data_paper_doi,)).fetchone()[0]
+                
+                # 2. まだ10件に達していない場合
+                if human_used_count < 10:
+                    # 3. 未確認の候補(LLM=Used)を探す
+                    query_candidate = query_common_part + " AND pc.cited_datapaper_doi = ? LIMIT 1;"
+                    paper = conn.execute(query_candidate, (data_paper_doi,)).fetchone()
+                    
+                    if paper:
+                        break # 処理すべき候補が見つかったのでループを抜ける
             
-        return dict(paper) if paper else None
+    return dict(paper) if paper else None
 
 def get_progress():
     """【モード別】のアノテーションの進捗状況を取得する"""
     with get_db_connection() as conn:
         
         if ANNOTATION_MODE == "evaluation":
-            # --- 評価用ロジック ---
             placeholders = ','.join('?' for _ in EVAL_DOI_LIST)
             total_query = f"SELECT COUNT(*) FROM positive_candidates WHERE cited_datapaper_doi IN ({placeholders}) AND llm_annotation_status = 1"
             annotated_query = f"SELECT COUNT(*) FROM positive_candidates WHERE cited_datapaper_doi IN ({placeholders}) AND llm_annotation_status = 1 AND human_annotation_status != 0"
@@ -124,9 +128,8 @@ def get_progress():
             progress_data = {"annotated": annotated, "total": total, "mode": "Evaluation (Target: LLM 'Used' papers)"}
 
         elif ANNOTATION_MODE == "training":
-            # ▼▼▼ 修正点: 'training' モードの進捗計算を元に戻す ▼▼▼
             placeholders = ','.join('?' for _ in TRAIN_DOI_LIST)
-            total = len(TRAIN_DOI_LIST) # Total = 150
+            total = len(TRAIN_DOI_LIST)
             query_annotated = f"""
                 SELECT COUNT(DISTINCT cited_datapaper_doi)
                 FROM positive_candidates
@@ -137,16 +140,16 @@ def get_progress():
             progress_data = {"annotated": annotated, "total": total, "mode": "Training (Target: 1 anchor per Data Paper)"}
             
         elif ANNOTATION_MODE == "training_advanced":
-            # --- 訓練用(追加)ロジック ---
             placeholders = ','.join('?' for _ in TRAIN_TOP20_DOI_LIST)
+            # Total = 上位20グループの「LLM=Used」の総数
             total_query = f"SELECT COUNT(*) FROM positive_candidates WHERE cited_datapaper_doi IN ({placeholders}) AND llm_annotation_status = 1"
+            # Annotated = 上位20グループで「人間が何らかの判断をした」総数
             annotated_query = f"SELECT COUNT(*) FROM positive_candidates WHERE cited_datapaper_doi IN ({placeholders}) AND human_annotation_status != 0"
             total = conn.execute(total_query, TRAIN_TOP20_DOI_LIST).fetchone()[0]
             annotated = conn.execute(annotated_query, TRAIN_TOP20_DOI_LIST).fetchone()[0]
-            progress_data = {"annotated": annotated, "total": total, "mode": "Training-Advanced (Top 20 groups)"}
+            progress_data = {"annotated": annotated, "total": total, "mode": "Training-Advanced (Target: Top 20 groups)"}
         
         return progress_data
-
 
 # --- Webページの表示とAPIの定義 ---
 @app.route('/')
@@ -177,18 +180,11 @@ def skip_datapaper():
     data_paper_doi = data.get('cited_datapaper_doi')
     if not data_paper_doi:
         return jsonify({"status": "error", "message": "No DOI provided"}), 400
-
     with get_db_connection() as conn:
-        query = """
-            UPDATE positive_candidates 
-            SET human_annotation_status = -2 
-            WHERE cited_datapaper_doi = ? AND human_annotation_status = 0
-        """
+        query = "UPDATE positive_candidates SET human_annotation_status = -2 WHERE cited_datapaper_doi = ? AND human_annotation_status = 0"
         conn.execute(query, (data_paper_doi,))
         conn.commit()
-    
     return jsonify({"status": "success"})
-
 
 @app.route('/get_llm_prompt', methods=['POST'])
 def get_llm_prompt():
@@ -202,9 +198,6 @@ def get_llm_prompt():
         prompt = prompt.replace("{full_text}", paper_data.get('citing_text', '')[:20000])
 
         return jsonify({"prompt": prompt})
-        
-    except FileNotFoundError:
-        return jsonify({"error": "Prompt file not found."}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
