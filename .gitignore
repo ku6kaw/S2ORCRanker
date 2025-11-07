@@ -8,3 +8,4 @@ data/raw
 __pycache__
 
 raw
+training_dataset_abstract.csv
