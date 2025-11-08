@@ -3,22 +3,21 @@ services:
   s2orcranker:
     build: .
     volumes:
-      # ローカルの「data」フォルダを、コンテナ内の「/app/data」にマウント（接続）
       - ./data:/app/data
-      # ローカルの「models」フォルダを、コンテナ内の「/app/models」にマウント
       - ./models:/app/models
-      # ローカルのコードもマウントし、ローカルでコードを修正すると即座にコンテナ内に反映されるようにする
       - ./src:/app/src
       - ./notebooks:/app/notebooks
       - ./annotator_app:/app/annotator_app
     ports:
-      # ローカルの8888番ポートを、コンテナの8888番ポートに接続
       - "8888:8888"
     deploy:
-      # NVIDIA GPUへのアクセスを許可する（最重要）
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    
+    environment:
+      - JUPYTER_TOKEN=123
+    
