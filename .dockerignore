@@ -1,0 +1,19 @@
+# 仮想環境
+venv/
+.venv/
+
+# 巨大なデータとモデル
+data/
+models/
+
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+
+annotator_app/
+prompts/
+tests/

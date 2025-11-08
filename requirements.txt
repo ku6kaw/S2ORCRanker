@@ -1,4 +1,15 @@
 pandas
 tqdm
 python-dotenv
+jupyter
+jupyter_http_over_ws
 jupyterlab
+transformers
+datasets
+accelerate
+scikit-learn
+seaborn
+matplotlib
+tqdm
+plotly
+google-api-core
