@@ -12,3 +12,4 @@ raw
 training_dataset_abstract.csv
 
 models/
+/data/processed
