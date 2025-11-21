@@ -3,6 +3,8 @@
 defaults:
   - _self_
 
+debug: false
+
 seed: 42
 
 # データ設定
@@ -40,3 +42,6 @@ evaluation:
   
   # 結果の保存先
   result_file: "evaluation_results.json"
+
+  use_faiss: true
+  gpu_search: true

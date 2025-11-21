@@ -114,6 +114,14 @@ def main(cfg: DictConfig):
 
     # 4. 推論実行ループ
     batch_size = cfg.model.batch_size
+    
+    if cfg.get("debug", False):
+        print("\n" + "="*50)
+        print(" ⚠️  DEBUG MODE ENABLED: Processing only 10 batches!")
+        print("="*50 + "\n")
+        # ジェネレータを作り直す必要はないが、ループ回数を制限する
+        total_papers = batch_size * 10
+        
     data_gen = fetch_data_generator(cfg.data.db_path, batch_size)
     
     doi_list = [] # インデックス -> DOI のマッピング用
@@ -121,11 +129,21 @@ def main(cfg: DictConfig):
     
     # tqdmのトータルは概算
     with torch.no_grad():
-        # ジェネレータからバッチを取得してループ
-        # tqdmには total_papers // batch_size を渡して進捗表示
-        pbar = tqdm(data_gen, total=total_papers // batch_size, desc="Encoding")
+        # tqdmのtotalを調整
+        pbar = tqdm(data_gen, total=(total_papers // batch_size) + 1, desc="Encoding")
         
-        for batch_dois, batch_texts in pbar:
+        # ★修正: enumerateでインデックス(i)とデータ((dois, texts))を同時に取得し、1つのループで処理する
+        for i, (batch_dois, batch_texts) in enumerate(pbar):
+            
+            # ▼▼▼ 1. デバッグモード時の脱出判定 ▼▼▼
+            if cfg.get("debug", False) and i >= 10:
+                print("Debug limit reached. Stopping.")
+                break
+            # ▲▲▲ -------------------------------- ▲▲▲
+
+            if not batch_texts:
+                continue
+        
             # トークナイズ
             inputs = tokenizer(
                 batch_texts, 

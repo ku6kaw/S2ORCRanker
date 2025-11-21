@@ -1,0 +1,4 @@
+- debug=true
+- model.path=models/debug_run/best_model
+- data.output_dir=data/processed/debug_embeddings
+- model.batch_size=16
