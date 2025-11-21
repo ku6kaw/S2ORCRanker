@@ -1,0 +1,24 @@
+debug: false
+seed: 42
+data:
+  db_path: data/processed/s2orc_filtered.db
+  eval_data_path: data/datapapers/sampled/evaluation_data_papers_50.csv
+  output_dir: data/processed/debug_embeddings
+  embeddings_file: corpus_embeddings.npy
+  doi_map_file: corpus_doi_map.json
+model:
+  path: models/debug_run/best_model
+  base_name: allenai/scibert_scivocab_uncased
+  max_length: 512
+  batch_size: 256
+evaluation:
+  k_values:
+  - 1
+  - 5
+  - 10
+  - 50
+  - 100
+  - 300
+  - 500
+  - 1000
+  result_file: evaluation_results.json

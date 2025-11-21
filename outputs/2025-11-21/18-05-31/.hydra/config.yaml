@@ -1,0 +1,14 @@
+seed: 42
+data:
+  input_train_file: data/processed/debug_mining_input.csv
+  faiss_index_file: data/processed/pretrained_scibert.faiss
+  doi_map_file: data/processed/pretrained_doi_map.json
+  db_path: data/processed/s2orc_filtered.db
+  output_file: data/processed/debug_hard_negatives.csv
+mining:
+  model_name: allenai/scibert_scivocab_uncased
+  max_length: 512
+  batch_size: 2
+  search_top_k: 50
+  neg_ratio: 3
+  min_text_length: 50
