@@ -1,0 +1,3 @@
+- data.input_train_file=data/processed/debug_mining_input.csv
+- data.output_file=data/processed/debug_hard_negatives.csv
+- mining.batch_size=2

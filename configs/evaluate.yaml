@@ -1,0 +1,42 @@
+# configs/evaluate.yaml
+
+defaults:
+  - _self_
+
+seed: 42
+
+# データ設定
+data:
+  # 全文(Abstract)が格納されているSQLite DB
+  db_path: "data/processed/s2orc_filtered.db"
+  
+  # 評価用データセット（クエリと正解ペア）
+  eval_data_path: "data/datapapers/sampled/evaluation_data_papers_50.csv"
+  
+  # ベクトル保存先ディレクトリ
+  output_dir: "data/processed/embeddings"
+  
+  # 保存ファイル名
+  embeddings_file: "corpus_embeddings.npy"
+  doi_map_file: "corpus_doi_map.json"
+
+# モデル設定
+model:
+  # 学習済みモデルのパス（run_train.pyの出力先を指定）
+  # 例: models/output_model/best_model
+  path: "models/output_model/best_model"
+  
+  # ベースモデル名（トークナイザ読み込み用）
+  base_name: "allenai/scibert_scivocab_uncased"
+  max_length: 512
+  
+  # 推論時のバッチサイズ (VRAMに合わせて調整: A6000なら大きくできる)
+  batch_size: 256 # A6000なら512~1024でもいけるかも
+
+# 評価設定
+evaluation:
+  # Recall@K の Kリスト
+  k_values: [1, 5, 10, 50, 100, 300, 500, 1000]
+  
+  # 結果の保存先
+  result_file: "evaluation_results.json"
