@@ -45,3 +45,7 @@ evaluation:
 
   use_faiss: true
   gpu_search: true
+
+  save_candidates: true
+  candidates_file: "candidates_for_reranking.json"
+  candidates_k: 50000
