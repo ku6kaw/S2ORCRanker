@@ -18,3 +18,4 @@ umap-learn
 tabulate
 torch
 transformers
+hydra-core
