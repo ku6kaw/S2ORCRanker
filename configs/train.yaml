@@ -8,6 +8,13 @@ debug: false
 
 seed: 42
 
+# --- 実験管理・ログ設定 ---
+logging:
+  use_wandb: true              # WandBを使うかどうか
+  project_name: "s2orc-ranker" # WandB上のプロジェクト名
+  run_name: null               # 実験名 (指定しなければ自動生成)
+  tags: []                     # タグ (例: ["hard-neg", "bi-encoder"])
+
 # データ設定
 data:
   train_file: "data/processed/training_dataset_hard_negatives_1to3.csv"
@@ -27,11 +34,11 @@ model:
 
 # 学習設定
 training:
-  output_dir: "models/output_model"
+  output_dir: "${hydra:runtime.cwd}/models/checkpoints/${model.type}/${now:%Y%m%d_%H%M%S}"
   batch_size: 32
   epochs: 3
-  learning_rate: 2e-5       # BERT本体の学習率 (低め)
-  head_learning_rate: 1e-3  # 分類ヘッドの学習率 (高め)
+  learning_rate: 2e-6       # BERT本体の学習率 (低め)
+  head_learning_rate: 2e-5  # 分類ヘッドの学習率 (高め)
   warmup_ratio: 0.1
   weight_decay: 0.01
   margin: 1.0 # LossのMargin

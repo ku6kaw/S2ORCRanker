@@ -7,6 +7,7 @@ from omegaconf import DictConfig, OmegaConf
 import torch
 from transformers import AutoTokenizer, TrainingArguments, AutoConfig
 from torch.optim import AdamW
+import wandb
 
 # プロジェクトルートをパスに追加
 sys.path.append(os.getcwd())
@@ -95,28 +96,39 @@ def create_optimizer_grouped_parameters(model, base_lr, head_lr, weight_decay):
 @hydra.main(config_path="../configs", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     print(f"=== Starting Training: {cfg.model.type} ===")
+    
+    # Configの内容を表示
     print(OmegaConf.to_yaml(cfg))
     
+    # ★ WandBの初期化
+    if cfg.logging.use_wandb:
+        wandb.init(
+            project=cfg.logging.project_name,
+            name=cfg.logging.run_name,
+            tags=cfg.logging.tags,
+            config=OmegaConf.to_container(cfg, resolve=True) # Hydraの設定をWandBに保存
+        )
+    
+    # 1. トークナイザ
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.name)
+    
+    # 2. データセット
     dataset_handler = TextRankingDataset(cfg, tokenizer)
     tokenized_datasets = dataset_handler.load_and_prepare()
     
+    # 3. モデル
     print(f"Loading model: {cfg.model.name}")
     model_config = AutoConfig.from_pretrained(cfg.model.name)
     
-    # ▼▼▼ 変更点: Trainer選択ロジック ▼▼▼
     if cfg.model.type == "cross_encoder":
         model_config.num_labels = 1
         model = CrossEncoderMarginModel.from_pretrained(cfg.model.name, config=model_config)
         trainer_cls = MarginRankingTrainer
     else:
-        # Bi-Encoder (分類ヘッドあり)
-        # config.yamlの head_type はモデル内部で使用されるが、
-        # Trainerは常にスコア(BCE Loss)を扱うものを使用する
         model = SiameseBiEncoder.from_pretrained(cfg.model.name, config=model_config)
         trainer_cls = BiEncoderPairTrainer 
 
-    # オプティマイザ作成
+    # 4. オプティマイザ (学習率差別化)
     base_lr = cfg.training.learning_rate
     head_lr = cfg.training.get("head_learning_rate", base_lr)
     print(f"Optimizer Setup: Base LR={base_lr}, Head LR={head_lr}")
@@ -126,8 +138,14 @@ def main(cfg: DictConfig):
     )
     optimizer = AdamW(optimizer_grouped_parameters)
 
+    # 5. Training Arguments
+    # 出力ディレクトリの作成（Hydraが自動解決したパス）
+    output_dir = cfg.training.output_dir
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
     args = TrainingArguments(
-        output_dir=cfg.training.output_dir,
+        output_dir=output_dir,
         per_device_train_batch_size=cfg.training.batch_size,
         per_device_eval_batch_size=cfg.training.batch_size,
         num_train_epochs=cfg.training.epochs,
@@ -142,10 +160,13 @@ def main(cfg: DictConfig):
         save_steps=cfg.training.save_steps,
         save_total_limit=cfg.training.save_total_limit,
         load_best_model_at_end=True,
-        report_to="none",
+        # ★ WandBへのレポート設定
+        report_to="wandb" if cfg.logging.use_wandb else "none",
+        run_name=cfg.logging.run_name, 
         remove_unused_columns=False,
     )
     
+    # 6. Trainer初期化
     trainer = trainer_cls(
         model=model,
         args=args,
@@ -159,8 +180,14 @@ def main(cfg: DictConfig):
     print("Starting training...")
     trainer.train()
     
-    print(f"Saving model to {cfg.training.output_dir}/best_model")
-    trainer.save_model(os.path.join(cfg.training.output_dir, "best_model"))
+    # ベストモデルの保存
+    best_model_path = os.path.join(output_dir, "best_model")
+    print(f"Saving best model to {best_model_path}")
+    trainer.save_model(best_model_path)
+    
+    # ★ WandB終了処理
+    if cfg.logging.use_wandb:
+        wandb.finish()
 
 if __name__ == "__main__":
     main()
