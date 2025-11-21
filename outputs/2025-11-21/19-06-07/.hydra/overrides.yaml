@@ -1,0 +1,4 @@
+- data.candidates_file=data/processed/debug_embeddings/candidates_for_reranking.json
+- data.output_dir=data/processed/debug_rerank
+- model.path=models/cencoder_margin_v2/best_model
+- model.batch_size=2

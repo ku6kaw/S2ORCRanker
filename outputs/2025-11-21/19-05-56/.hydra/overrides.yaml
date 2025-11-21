@@ -1,0 +1,4 @@
+- data.output_dir=data/processed/debug_embeddings
+- model.path=models/debug_run/best_model
+- evaluation.save_candidates=true
+- evaluation.candidates_k=5

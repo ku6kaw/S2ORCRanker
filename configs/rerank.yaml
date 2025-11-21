@@ -15,7 +15,6 @@ data:
   
   # 結果保存先
   output_dir: "data/processed/rerank_results"
-  result_file: "rerank_evaluation.json"
 
 # モデル設定
 model:
@@ -32,3 +31,5 @@ model:
 # 評価設定
 evaluation:
   k_values: [1, 5, 10, 50, 100, 300]
+
+  result_file: "rerank_evaluation.json"

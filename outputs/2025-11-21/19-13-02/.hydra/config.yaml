@@ -1,0 +1,19 @@
+seed: 42
+data:
+  candidates_file: data/processed/debug_embeddings/candidates_for_reranking.json
+  db_path: data/processed/s2orc_filtered.db
+  output_dir: data/processed/debug_rerank
+model:
+  path: models/cencoder_margin_v2/best_model
+  base_name: allenai/longformer-base-4096
+  max_length: 2048
+  batch_size: 2
+evaluation:
+  k_values:
+  - 1
+  - 5
+  - 10
+  - 50
+  - 100
+  - 300
+  result_file: rerank_evaluation.json
