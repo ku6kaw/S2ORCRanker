@@ -4,7 +4,7 @@ import time
 from tqdm.auto import tqdm
 from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from src.gemini_handler import GeminiHandler
+from src.annotation.gemini_handler import GeminiHandler
 
 # --- Pydanticスキーマ定義 ---
 class AnnotationDecision(BaseModel):

@@ -1,0 +1,7 @@
+- debug=true
+- training.epochs=1
+- training.batch_size=4
+- training.logging_steps=1
+- training.save_steps=5
+- training.eval_steps=5
+- training.output_dir=models/debug_run

@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request
 import sqlite3
 import os
 import pandas as pd
-import random # 429エラーのリトライ用
+import random
 
 # --- ▼▼▼ ユーザ設定: ここでモードを切り替える ▼▼▼ ---
 # "evaluation", "training", "training_advanced"

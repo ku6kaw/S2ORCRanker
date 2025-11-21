@@ -1,0 +1,43 @@
+# configs/train.yaml
+
+# --- デフォルト設定 ---
+defaults:
+  - _self_
+
+debug: false
+
+seed: 42
+
+# データ設定
+data:
+  train_file: "data/processed/training_dataset_hard_negatives_1to3.csv"
+  val_size: 0.2
+  num_proc: 4
+  # format: "pair" (Bi-Encoder用) or "triplet" (Cross-Encoder用)
+  format: "pair"
+
+# モデル設定
+model:
+  # type: "bi_encoder" or "cross_encoder"
+  type: "bi_encoder"
+  name: "allenai/scibert_scivocab_uncased"
+  max_length: 512
+  # Bi-Encoder用: "none" or "ranknet"
+  head_type: "ranknet"
+
+# 学習設定
+training:
+  output_dir: "models/output_model"
+  batch_size: 32
+  epochs: 3
+  learning_rate: 2e-5       # BERT本体の学習率 (低め)
+  head_learning_rate: 1e-3  # 分類ヘッドの学習率 (高め)
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  margin: 1.0 # LossのMargin
+  
+  # ログ・保存設定
+  logging_steps: 10
+  eval_steps: 50
+  save_steps: 50
+  save_total_limit: 2
