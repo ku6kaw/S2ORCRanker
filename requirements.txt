@@ -16,3 +16,5 @@ google-api-core
 faiss-gpu
 umap-learn
 tabulate
+torch
+transformers
