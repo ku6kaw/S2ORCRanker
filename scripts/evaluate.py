@@ -12,6 +12,7 @@ import sqlite3
 import faiss
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer, AutoConfig
+import wandb
 
 sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
@@ -55,9 +56,18 @@ def main(cfg: DictConfig):
     print("=== Starting Evaluation ===")
     print(OmegaConf.to_yaml(cfg))
     
+    # ★ WandB初期化
+    if cfg.logging.use_wandb:
+        wandb.init(
+            project=cfg.logging.project_name,
+            name=cfg.logging.run_name,
+            tags=cfg.logging.tags,
+            config=OmegaConf.to_container(cfg, resolve=True)
+        )
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # 1. ロード処理
+    # 1. ロード処理 (省略せず記述)
     embeddings_path = os.path.join(cfg.data.output_dir, cfg.data.embeddings_file)
     doi_map_path = os.path.join(cfg.data.output_dir, cfg.data.doi_map_file)
     
@@ -87,7 +97,7 @@ def main(cfg: DictConfig):
             faiss.normalize_L2(batch_vecs)
             index.add(batch_vecs)
     else:
-        print("Faiss is required for this script.")
+        print("Faiss is required.")
         return
 
     # 3. モデルロード
@@ -109,11 +119,13 @@ def main(cfg: DictConfig):
         return
 
     ranks = []
-    candidates_list = [] # リランキング用候補リスト
+    candidates_list = []
+    # ★ WandB用テーブルデータ
+    wandb_table_data = []
     
     max_k = max(cfg.evaluation.k_values)
     save_k = cfg.evaluation.get("candidates_k", 1000)
-    search_k = max(max_k, save_k) + 50 # 余裕を持って検索
+    search_k = max(max_k, save_k) + 50
     
     for q_data in tqdm(queries, desc="Evaluating"):
         inputs = tokenizer(
@@ -129,10 +141,8 @@ def main(cfg: DictConfig):
         D, I = index.search(q_vec, search_k)
         
         found_indices = I[0]
-        # インデックス -> DOI
         found_dois = [doi_list[idx] for idx in found_indices if idx >= 0 and idx < len(doi_list)]
         
-        # ランク計算
         ground_truth_set = set(q_data["ground_truth_dois"])
         first_hit_rank = 0
         for rank, doi in enumerate(found_dois, 1):
@@ -141,33 +151,55 @@ def main(cfg: DictConfig):
                 break
         ranks.append(first_hit_rank)
         
-        # ▼▼▼ 候補リストの保存（リランキング用） ▼▼▼
-        # クエリ情報、正解情報、検索された候補（Top-K）を保存
         candidates_list.append({
             "query_doi": q_data["query_doi"],
-            "query_text": q_data["query_text"], # リランカーへの入力として重要
+            "query_text": q_data["query_text"],
             "ground_truth_dois": q_data["ground_truth_dois"],
-            "retrieved_candidates": found_dois[:save_k], # 指定件数まで保存
+            "retrieved_candidates": found_dois[:save_k],
             "first_hit_rank_retriever": first_hit_rank
         })
 
-    # 5. 結果保存
+        # ★ WandB Tableに追加 (クエリごとの結果)
+        if cfg.logging.use_wandb:
+            wandb_table_data.append([
+                q_data["query_doi"],
+                q_data["query_text"][:200], # 長すぎるのでトリミング
+                len(q_data["ground_truth_dois"]),
+                first_hit_rank,
+                found_dois[0] if found_dois else "None" # Top-1候補
+            ])
+
+    # 5. 結果保存・ログ送信
     print("\n=== Evaluation Results (Retriever) ===")
     recall_scores = calculate_recall_at_k(ranks, cfg.evaluation.k_values)
     mrr = calculate_mrr(ranks)
     print(f"MRR: {mrr:.4f}")
     
-    # メトリクス保存
+    # ファイル保存
     out_file = os.path.join(cfg.data.output_dir, cfg.evaluation.result_file)
     with open(out_file, 'w') as f:
         json.dump({"mrr": mrr, "recall": recall_scores}, f, indent=2)
         
-    # 候補リスト保存
     if cfg.evaluation.get("save_candidates", False):
         cand_file = os.path.join(cfg.data.output_dir, cfg.evaluation.candidates_file)
         print(f"Saving candidates for reranking to {cand_file}...")
         with open(cand_file, 'w') as f:
             json.dump(candidates_list, f, indent=2)
+
+    # ★ WandBへログ送信
+    if cfg.logging.use_wandb:
+        # メトリクス
+        log_dict = {"mrr": mrr}
+        for k, score in recall_scores.items():
+            log_dict[f"recall@{k}"] = score
+        wandb.log(log_dict)
+        
+        # 詳細テーブル
+        columns = ["Query DOI", "Query Text", "Num GT", "First Hit Rank", "Top-1 DOI"]
+        table = wandb.Table(data=wandb_table_data, columns=columns)
+        wandb.log({"retrieval_details": table})
+        
+        wandb.finish()
 
 if __name__ == "__main__":
     main()

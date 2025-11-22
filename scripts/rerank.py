@@ -10,6 +10,7 @@ import sqlite3
 import numpy as np
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer, AutoConfig
+import wandb
 
 sys.path.append(os.getcwd())
 from src.modeling.cross_encoder import CrossEncoderMarginModel
@@ -35,22 +36,30 @@ def main(cfg: DictConfig):
     print("=== Starting Reranking ===")
     print(OmegaConf.to_yaml(cfg))
     
+    # ★ WandB初期化
+    if cfg.logging.use_wandb:
+        wandb.init(
+            project=cfg.logging.project_name,
+            name=cfg.logging.run_name,
+            tags=cfg.logging.tags,
+            config=OmegaConf.to_container(cfg, resolve=True)
+        )
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # 1. 候補リストのロード
+    # 1. 候補ロード
     print(f"Loading candidates from: {cfg.data.candidates_file}")
     with open(cfg.data.candidates_file, 'r') as f:
         candidates_data = json.load(f)
     
-    # 2. Cross-Encoderのロード
+    # 2. モデルロード
     print(f"Loading Cross-Encoder: {cfg.model.path}")
     try:
         config = AutoConfig.from_pretrained(cfg.model.path)
-        # num_labels=1 を確認（回帰/ランキングスコア）
         config.num_labels = 1
         model = CrossEncoderMarginModel.from_pretrained(cfg.model.path, config=config)
     except Exception as e:
-        print(f"Error loading model: {e}. Loading from base.")
+        print(f"Loading from base due to error: {e}")
         config = AutoConfig.from_pretrained(cfg.model.base_name)
         config.num_labels = 1
         model = CrossEncoderMarginModel.from_pretrained(cfg.model.base_name, config=config)
@@ -61,6 +70,8 @@ def main(cfg: DictConfig):
 
     # 3. リランキング実行
     final_ranks = []
+    # ★ WandB用テーブルデータ
+    wandb_table_data = []
     
     if not os.path.exists(cfg.data.output_dir):
         os.makedirs(cfg.data.output_dir)
@@ -68,81 +79,83 @@ def main(cfg: DictConfig):
     for query_item in tqdm(candidates_data, desc="Reranking Queries"):
         query_text = query_item["query_text"]
         candidate_dois = query_item["retrieved_candidates"]
+        # 以前の順位（Retrieverの順位）を取得。0なら見つからなかった
+        retriever_rank = query_item.get("first_hit_rank_retriever", 0)
         
-        # 候補の本文をDBから取得
-        # (数が多い場合はここがボトルネックになる可能性あり。必要なら事前に一括取得)
         doi_to_text = get_abstracts_from_db(candidate_dois, cfg.data.db_path)
-        
-        # 本文がある候補のみペアを作成
-        valid_pairs = [] # (doi, text)
+        valid_pairs = []
         for doi in candidate_dois:
             if doi in doi_to_text:
                 valid_pairs.append((doi, doi_to_text[doi]))
         
-        if not valid_pairs:
-            final_ranks.append(0)
-            continue
-
-        # バッチ処理でスコアリング
-        scores = []
-        batch_size = cfg.model.batch_size
+        first_hit_rank = 0 # 初期値
         
-        for i in range(0, len(valid_pairs), batch_size):
-            batch = valid_pairs[i : i + batch_size]
-            batch_texts = [p[1] for p in batch]
+        if valid_pairs:
+            scores = []
+            batch_size = cfg.model.batch_size
             
-            # Cross-Encoder入力: [CLS] Query [SEP] Document [SEP]
-            inputs = tokenizer(
-                [query_text] * len(batch), # Queryをバッチ分複製
-                batch_texts,
-                padding=True, truncation=True,
-                max_length=cfg.model.max_length,
-                return_tensors="pt"
-            ).to(device)
+            for i in range(0, len(valid_pairs), batch_size):
+                batch = valid_pairs[i : i + batch_size]
+                batch_texts = [p[1] for p in batch]
+                inputs = tokenizer(
+                    [query_text] * len(batch), batch_texts,
+                    padding=True, truncation=True,
+                    max_length=cfg.model.max_length, return_tensors="pt"
+                ).to(device)
+                
+                with torch.no_grad():
+                    outputs = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
+                    batch_scores = outputs.logits[0].cpu().numpy().flatten()
+                    scores.extend(batch_scores)
             
-            with torch.no_grad():
-                # forward(input_ids, ...) -> logits (score_positive, score_negative)
-                # 評価時は正例ペアとして入力し、score_positiveを見る
-                outputs = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
-                # logits: (Batch, 2) -> (pos_score, neg_score)
-                # 今回の実装では (score, None) が返ってくるはず（負例入力がないため）
-                # CrossEncoderMarginModel.forward の戻り値を確認:
-                # logits=(score_positive, score_negative)
-                batch_scores = outputs.logits[0].cpu().numpy().flatten()
-                scores.extend(batch_scores)
-        
-        # スコア順にソート
-        # valid_pairs と scores は対応している
-        scored_candidates = []
-        for j, (doi, _) in enumerate(valid_pairs):
-            scored_candidates.append((doi, scores[j]))
+            scored_candidates = []
+            for j, (doi, _) in enumerate(valid_pairs):
+                scored_candidates.append((doi, scores[j]))
+                
+            scored_candidates.sort(key=lambda x: x[1], reverse=True)
+            sorted_dois = [x[0] for x in scored_candidates]
             
-        # スコア降順ソート
-        scored_candidates.sort(key=lambda x: x[1], reverse=True)
-        sorted_dois = [x[0] for x in scored_candidates]
+            ground_truth_set = set(query_item["ground_truth_dois"])
+            for rank, doi in enumerate(sorted_dois, 1):
+                if doi in ground_truth_set:
+                    first_hit_rank = rank
+                    break
         
-        # 再評価 (Rank計算)
-        ground_truth_set = set(query_item["ground_truth_dois"])
-        first_hit_rank = 0
-        for rank, doi in enumerate(sorted_dois, 1):
-            if doi in ground_truth_set:
-                first_hit_rank = rank
-                break
+        # リトリーバーで見つかっていない(0)場合、リランカーでも0のまま
+        # リトリーバーで見つかった(>0)が、候補内(Top-K)に入っていなければ
+        # ここでの first_hit_rank も 0 になる。
         
-        # リトリーバーで見つからなかった(リストに含まれていなかった)場合は、
-        # リランキング後も「見つからない(0)」とするか、
-        # もとの順位を維持するか？ → 通常は候補に入らなければ0（失敗）。
+        # 最終ランクの決定:
+        # もし候補内に正解があればその順位、なければ0
         final_ranks.append(first_hit_rank)
+
+        # ★ WandB Tableに追加 (順位変動の可視化)
+        if cfg.logging.use_wandb:
+            # 改善幅 (正の値なら改善、負なら悪化)
+            # 0 (圏外) の扱いに注意
+            if retriever_rank > 0 and first_hit_rank > 0:
+                improvement = retriever_rank - first_hit_rank
+            elif retriever_rank == 0 and first_hit_rank > 0:
+                improvement = 9999 # 圏外から発見（ありえないが）
+            elif retriever_rank > 0 and first_hit_rank == 0:
+                improvement = -9999 # 候補落ち
+            else:
+                improvement = 0 # どちらも圏外
+
+            wandb_table_data.append([
+                query_item["query_doi"],
+                query_text[:100],
+                retriever_rank,
+                first_hit_rank,
+                improvement
+            ])
 
     # 4. 最終結果出力
     print("\n=== Reranking Results ===")
     recall_scores = calculate_recall_at_k(final_ranks, cfg.evaluation.k_values)
     mrr = calculate_mrr(final_ranks)
-    
     print(f"MRR: {mrr:.4f}")
-    for k, score in recall_scores.items():
-        print(f"Recall@{k}: {score:.4f}")
-        
+    
     results = {
         "config": OmegaConf.to_container(cfg, resolve=True),
         "mrr": mrr,
@@ -152,6 +165,19 @@ def main(cfg: DictConfig):
     
     with open(os.path.join(cfg.data.output_dir, cfg.evaluation.result_file), 'w') as f:
         json.dump(results, f, indent=2)
+
+    # ★ WandBへログ送信
+    if cfg.logging.use_wandb:
+        log_dict = {"mrr": mrr}
+        for k, score in recall_scores.items():
+            log_dict[f"recall@{k}"] = score
+        wandb.log(log_dict)
+        
+        columns = ["Query DOI", "Query Text", "Retriever Rank", "Reranker Rank", "Improvement"]
+        table = wandb.Table(data=wandb_table_data, columns=columns)
+        wandb.log({"reranking_details": table})
+        
+        wandb.finish()
 
 if __name__ == "__main__":
     main()
