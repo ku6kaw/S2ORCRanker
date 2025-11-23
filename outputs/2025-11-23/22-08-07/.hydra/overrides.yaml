@@ -1,0 +1,8 @@
+- data.output_dir=data/processed/legacy_embeddings
+- data.embeddings_file=pretrained_scibert_cls_embeddings.npy
+- data.doi_map_file=pretrained_doi_map.json
+- model.path=allenai/scibert_scivocab_uncased
+- logging.run_name=eval_Baseline_PretrainedSciBERT
+- evaluation.save_candidates=false
+- evaluation.calc_full_rank=true
+- evaluation.gpu_search=false

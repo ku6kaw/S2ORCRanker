@@ -1,0 +1,8 @@
+- data.output_dir=data/processed/legacy_embeddings
+- data.embeddings_file=contrastive_scibert_cls_embeddings.npy
+- data.doi_map_file=contrastive_doi_map.json
+- model.path=models/sbert_contrastive_with_head_v1/best_model
+- logging.run_name=eval_Siamese_Contrastive
+- evaluation.save_candidates=false
+- evaluation.calc_full_rank=true
+- evaluation.gpu_search=false
