@@ -19,7 +19,7 @@ data:
   db_path: "data/processed/s2orc_filtered.db"
   
   # 評価用データセット（クエリと正解ペア）
-  eval_data_path: "data/datapapers/sampled/evaluation_data_papers_50_v2.csv"
+  eval_jsonl_file: "data/processed/evaluation_dataset_rich.jsonl"
   
   # ベクトル保存先ディレクトリ
   output_dir: "data/processed/embeddings"
@@ -55,3 +55,4 @@ evaluation:
   save_candidates: true
   candidates_file: "candidates_for_reranking.json"
   candidates_k: 50000
+  calc_full_rank: true

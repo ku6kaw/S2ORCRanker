@@ -1,0 +1,8 @@
+Loading DOI map from data/processed/embeddings/Bi_RankNet_HardNeg_v1/corpus_doi_map.json...
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/20251121_192908/best_model', 'data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v1', 'logging.run_name=eval_Bi_RankNet_HardNeg_v1_FullRank', 'evaluation.save_candidates=true', 'evaluation.candidates_k=30000', 'evaluation.calc_full_rank=true', 'evaluation.gpu_search=false']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 109, in main
+    pprint(f"Loading embeddings (mmap) from {embeddings_path}...")
+NameError: name 'pprint' is not defined. Did you mean: 'print'?
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

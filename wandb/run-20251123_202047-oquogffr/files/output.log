@@ -1,0 +1,11 @@
+Loading DOI map from data/processed/embeddings/Bi_RankNet_HardNeg_v1/corpus_doi_map.json...
+Loading embeddings (mmap) from data/processed/embeddings/Bi_RankNet_HardNeg_v1/corpus_embeddings.npy...
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/20251121_192908/best_model', 'data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v1', 'logging.run_name=eval_Bi_RankNet_HardNeg_v1_FullRank', 'evaluation.save_candidates=true', 'evaluation.candidates_k=30000', 'evaluation.calc_full_rank=true', 'evaluation.gpu_search=false']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 111, in main
+    temp = np.load(embeddings_path, mmap_mode='r')
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/numpy/lib/npyio.py", line 462, in load
+    raise ValueError("Cannot load file containing pickled data "
+ValueError: Cannot load file containing pickled data when allow_pickle=False
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
