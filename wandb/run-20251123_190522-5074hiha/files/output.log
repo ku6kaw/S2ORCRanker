@@ -1,0 +1,13 @@
+Loading DOI map from data/processed/embeddings/Bi_RankNet_HardNeg_v1/corpus_doi_map.json...
+Loading embeddings (mmap)...
+Building Faiss Index...
+Indexing: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 233/233 [00:33<00:00,  7.05it/s]
+Loading query encoder: models/checkpoints/bi_encoder/20251121_192908/best_model
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading Ground Truth: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 851.94it/s]
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [02:43<00:00,  3.28s/it]
+
+=== Evaluation Results (Retriever) ===
+MRR: 0.0008
+Saving candidates for reranking to data/processed/embeddings/Bi_RankNet_HardNeg_v1/candidates_for_reranking.json...

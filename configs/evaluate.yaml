@@ -19,7 +19,7 @@ data:
   db_path: "data/processed/s2orc_filtered.db"
   
   # 評価用データセット（クエリと正解ペア）
-  eval_data_path: "data/datapapers/sampled/evaluation_data_papers_50.csv"
+  eval_data_path: "data/datapapers/sampled/evaluation_data_papers_50_v2.csv"
   
   # ベクトル保存先ディレクトリ
   output_dir: "data/processed/embeddings"

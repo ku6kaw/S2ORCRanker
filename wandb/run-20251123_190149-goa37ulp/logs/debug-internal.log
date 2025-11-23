@@ -1,0 +1,12 @@
+{"time":"2025-11-23T19:01:50.138850746+09:00","level":"INFO","msg":"stream: starting","core version":"0.23.0"}
+{"time":"2025-11-23T19:01:50.478073244+09:00","level":"INFO","msg":"stream: created new stream","id":"goa37ulp"}
+{"time":"2025-11-23T19:01:50.478099447+09:00","level":"INFO","msg":"handler: started","stream_id":"goa37ulp"}
+{"time":"2025-11-23T19:01:50.47816743+09:00","level":"INFO","msg":"stream: started","id":"goa37ulp"}
+{"time":"2025-11-23T19:01:50.478205674+09:00","level":"INFO","msg":"writer: started","stream_id":"goa37ulp"}
+{"time":"2025-11-23T19:01:50.478217234+09:00","level":"INFO","msg":"sender: started","stream_id":"goa37ulp"}
+{"time":"2025-11-23T19:05:13.792443252+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-11-23T19:05:14.08098188+09:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-11-23T19:05:14.089831937+09:00","level":"INFO","msg":"stream: closing","id":"goa37ulp"}
+{"time":"2025-11-23T19:05:14.089858629+09:00","level":"INFO","msg":"handler: closed","stream_id":"goa37ulp"}
+{"time":"2025-11-23T19:05:14.089946672+09:00","level":"INFO","msg":"sender: closed","stream_id":"goa37ulp"}
+{"time":"2025-11-23T19:05:14.089979471+09:00","level":"INFO","msg":"stream: closed","id":"goa37ulp"}
