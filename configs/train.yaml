@@ -12,7 +12,7 @@ seed: 42
 logging:
   use_wandb: true              # WandBを使うかどうか
   project_name: "s2orc-ranker" # WandB上のプロジェクト名
-  run_name: null               # 実験名 (指定しなければ自動生成)
+  run_name: "exp_${now:%Y%m%d_%H%M%S}"               # 実験名 (指定しなければ自動生成)
   tags: []                     # タグ (例: ["hard-neg", "bi-encoder"])
 
 # データ設定
@@ -34,7 +34,7 @@ model:
 
 # 学習設定
 training:
-  output_dir: "${hydra:runtime.cwd}/models/checkpoints/${model.type}/${now:%Y%m%d_%H%M%S}"
+  output_dir: "${hydra:runtime.cwd}/models/checkpoints/${model.type}/${logging.run_name}"
   batch_size: 32
   epochs: 3
   learning_rate: 2e-6       # BERT本体の学習率 (低め)

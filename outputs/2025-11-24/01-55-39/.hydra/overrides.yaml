@@ -1,0 +1,3 @@
+- model.path=models/checkpoints/bi_encoder/20251123_042811/best_model
+- data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v2_FixLR
+- model.batch_size=512
