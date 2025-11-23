@@ -1,0 +1,6 @@
+- model.path=models/checkpoints/bi_encoder/20251121_192908/best_model
+- data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v1
+- logging.run_name=eval_Bi_RankNet_HardNeg_v1
+- evaluation.save_candidates=true
+- evaluation.candidates_k=2000
+- evaluation.gpu_search=false

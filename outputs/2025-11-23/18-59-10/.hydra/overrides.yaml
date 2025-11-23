@@ -1,0 +1,6 @@
+- data.output_dir=data/processed/legacy_embeddings
+- data.embeddings_file=pretrained_scibert_cls_embeddings.npy
+- data.doi_map_file=pretrained_doi_map.json
+- logging.run_name=eval_Baseline_PretrainedSciBERT
+- evaluation.save_candidates=false
+- evaluation.gpu_search=false

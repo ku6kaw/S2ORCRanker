@@ -1,0 +1,9 @@
+- debug=false
+- logging.run_name=Bi_RankNet_HardNeg_v2_FixLR
+- model.type=bi_encoder
+- model.head_type=ranknet
+- data.train_file=data/processed/training_dataset_hard_negatives_1to3.csv
+- training.epochs=3
+- training.batch_size=32
+- training.learning_rate=2e-6
+- training.head_learning_rate=5e-5

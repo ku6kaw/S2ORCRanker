@@ -1,0 +1,92 @@
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading dataset from: data/processed/training_dataset_hard_negatives_1to3.csv
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 22044, Validation set: 6008
+Tokenizing...
+Map (num_proc=4): 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 22044/22044 [00:06<00:00, 3387.00 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6008/6008 [00:01<00:00, 3573.54 examples/s]
+Loading model: allenai/scibert_scivocab_uncased
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Some weights of SiameseBiEncoder were not initialized from the model checkpoint at allenai/scibert_scivocab_uncased and are newly initialized: ['classifier_head.0.bias', 'classifier_head.0.weight', 'classifier_head.2.bias', 'classifier_head.2.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Optimizer Setup: Base LR=2e-06, Head LR=5e-05
+Starting training...
+  4%|██████▌                                                                                                                                                    | 87/2067 [03:32<45:59,  1.39s/it]Traceback (most recent call last):
+{'loss': 0.7311, 'grad_norm': 5.038946151733398, 'learning_rate': 2.4154589371980677e-06, 'epoch': 0.01}
+{'loss': 0.6792, 'grad_norm': 4.375236511230469, 'learning_rate': 4.830917874396135e-06, 'epoch': 0.03}
+{'loss': 0.6263, 'grad_norm': 1.8109314441680908, 'learning_rate': 7.246376811594203e-06, 'epoch': 0.04}
+{'loss': 0.5737, 'grad_norm': 2.0542616844177246, 'learning_rate': 9.66183574879227e-06, 'epoch': 0.06}
+{'loss': 0.512, 'grad_norm': 2.4075541496276855, 'learning_rate': 1.2077294685990338e-05, 'epoch': 0.07}
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 216, in <module>                                                                                                          
+{'eval_loss': 0.5179862976074219, 'eval_accuracy': 0.7563249001331558, 'eval_f1': 0.04935064935064935, 'eval_precision': 1.0, 'eval_recall': 0.02529960053262317, 'eval_runtime': 91.9829, 'eval_samples_per_second': 65.316, 'eval_steps_per_second': 2.044, 'epoch': 0.07}
+{'loss': 0.5045, 'grad_norm': 3.0789153575897217, 'learning_rate': 1.4492753623188407e-05, 'epoch': 0.09}
+{'loss': 0.4811, 'grad_norm': 3.2962169647216797, 'learning_rate': 1.6908212560386476e-05, 'epoch': 0.1}
+{'loss': 0.4742, 'grad_norm': 2.925693988800049, 'learning_rate': 1.932367149758454e-05, 'epoch': 0.12}
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 204, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 1859, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2203, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3147, in training_step
+    self.accelerator.backward(loss)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/accelerator.py", line 2740, in backward
+    loss.backward(**kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 216, in <module>
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 204, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 1859, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2203, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3147, in training_step
+    self.accelerator.backward(loss)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/accelerator.py", line 2740, in backward
+    loss.backward(**kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt

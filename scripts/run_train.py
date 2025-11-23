@@ -8,6 +8,8 @@ import torch
 from transformers import AutoTokenizer, TrainingArguments, AutoConfig
 from torch.optim import AdamW
 import wandb
+import numpy as np
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 # プロジェクトルートをパスに追加
 sys.path.append(os.getcwd())
@@ -93,6 +95,26 @@ def create_optimizer_grouped_parameters(model, base_lr, head_lr, weight_decay):
 
     return optimizer_grouped_parameters
 
+def compute_metrics(eval_pred):
+    """
+    Bi-Encoder (BCE Loss) 用の評価指標計算
+    """
+    predictions, labels = eval_pred
+    # predictionsはロジット(スコア)なので、0を閾値として0/1に変換
+    # (Sigmoidを通すと 0.5 が閾値になるのと同義)
+    preds = (predictions > 0).astype(int).reshape(-1)
+    labels = labels.astype(int).reshape(-1)
+
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary', zero_division=0)
+    acc = accuracy_score(labels, preds)
+    
+    return {
+        'accuracy': acc,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall
+    }
+
 @hydra.main(config_path="../configs", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     print(f"=== Starting Training: {cfg.model.type} ===")
@@ -174,7 +196,8 @@ def main(cfg: DictConfig):
         eval_dataset=tokenized_datasets["validation"],
         tokenizer=tokenizer,
         margin=cfg.training.margin,
-        optimizers=(optimizer, None)
+        optimizers=(optimizer, None),
+        compute_metrics=compute_metrics if cfg.model.type == "bi_encoder" else None
     )
     
     print("Starting training...")

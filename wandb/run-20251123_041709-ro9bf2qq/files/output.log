@@ -1,0 +1,16 @@
+Loading DOI map from data/processed/embeddings/Bi_RankNet_HardNeg_v1/corpus_doi_map.json...
+Loading embeddings (mmap)...
+Building Faiss Index...
+Indexing:  67%|█████████████████████████████████████████████████████████████████████████████████████████████████▋                                               | 157/233 [00:55<00:26,  2.82it/s]
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/20251121_192908/best_model', 'data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v1', 'logging.run_name=eval_Bi_RankNet_HardNeg_v1', 'evaluation.save_candidates=true', 'evaluation.candidates_k=2000']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 98, in main
+    index.add(batch_vecs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/faiss/__init__.py", line 215, in replacement_add
+    self.add_c(n, swig_ptr(x))
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/faiss/swigfaiss.py", line 9091, in add
+    return _swigfaiss.GpuIndexFlat_add(self, arg2, x)
+RuntimeError: Error in virtual void* faiss::gpu::StandardGpuResourcesImpl::allocMemory(const faiss::gpu::AllocRequest&) at /project/faiss/faiss/gpu/StandardGpuResources.cpp:452: Error: 'err == cudaSuccess' failed: StandardGpuResources: alloc fail type FlatData dev 0 space Device stream 0x580e58a54c90 size 24268800000 bytes (cudaMalloc error out of memory [2])
+
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

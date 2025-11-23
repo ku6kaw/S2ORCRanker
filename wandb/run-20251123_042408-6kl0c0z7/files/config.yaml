@@ -1,0 +1,160 @@
+_wandb:
+    value:
+        cli_version: 0.23.0
+        e:
+            1f11ysqrc182oulk97r6ja4jgkvr9bep:
+                args:
+                    - model.path=models/checkpoints/bi_encoder/20251121_192908/best_model
+                    - data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v1
+                    - logging.run_name=eval_Bi_RankNet_HardNeg_v1
+                    - evaluation.save_candidates=true
+                    - evaluation.candidates_k=50000
+                    - evaluation.gpu_search=false
+                codePath: scripts/evaluate.py
+                codePathLocal: scripts/evaluate.py
+                cpu_count: 24
+                cpu_count_logical: 32
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "982820896768"
+                        used: "723238060032"
+                email: reoreo01.123@gmail.com
+                executable: /usr/bin/python
+                git:
+                    commit: 2bf225df1478a7060f5cf558124a7fd97162775d
+                    remote: https://github.com/ku6kaw/S2ORCRanker
+                gpu: NVIDIA RTX A6000
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 10752
+                      memoryTotal: "51527024640"
+                      name: NVIDIA RTX A6000
+                      uuid: GPU-b6e6e0e3-0979-08d4-7b26-7ebfb7c03ea4
+                host: lssgpu
+                memory:
+                    total: "67242205184"
+                os: Linux-6.8.0-60-generic-x86_64-with-glibc2.35
+                program: /home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py
+                python: CPython 3.10.12
+                root: /home/kurokawa/Projects/S2ORCRanker
+                startedAt: "2025-11-22T19:24:08.362606Z"
+                writerId: 1f11ysqrc182oulk97r6ja4jgkvr9bep
+        m: []
+        python_version: 3.10.12
+        t:
+            "1":
+                - 1
+                - 11
+                - 49
+                - 50
+                - 71
+            "2":
+                - 1
+                - 11
+                - 49
+                - 50
+                - 71
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+            "4": 3.10.12
+            "5": 0.23.0
+            "6": 4.40.0
+            "12": 0.23.0
+            "13": linux-x86_64
+data:
+    value:
+        db_path: data/processed/s2orc_filtered.db
+        doi_map_file: corpus_doi_map.json
+        embeddings_file: corpus_embeddings.npy
+        eval_data_path: data/datapapers/sampled/evaluation_data_papers_50.csv
+        output_dir: data/processed/embeddings/Bi_RankNet_HardNeg_v1
+debug:
+    value: false
+evaluation:
+    value:
+        candidates_file: candidates_for_reranking.json
+        candidates_k: 50000
+        gpu_search: false
+        k_values:
+            - 1
+            - 5
+            - 10
+            - 50
+            - 100
+            - 300
+            - 500
+            - 1000
+            - 2000
+            - 3000
+            - 4000
+            - 5000
+            - 6000
+            - 7000
+            - 8000
+            - 9000
+            - 10000
+            - 11000
+            - 12000
+            - 13000
+            - 14000
+            - 15000
+            - 16000
+            - 17000
+            - 18000
+            - 19000
+            - 20000
+            - 21000
+            - 22000
+            - 23000
+            - 24000
+            - 25000
+            - 26000
+            - 27000
+            - 28000
+            - 29000
+            - 30000
+            - 31000
+            - 32000
+            - 33000
+            - 34000
+            - 35000
+            - 36000
+            - 37000
+            - 38000
+            - 39000
+            - 40000
+            - 41000
+            - 42000
+            - 43000
+            - 44000
+            - 45000
+            - 46000
+            - 47000
+            - 48000
+            - 49000
+            - 50000
+        result_file: evaluation_results.json
+        save_candidates: true
+        use_faiss: true
+logging:
+    value:
+        project_name: s2orc-ranker
+        run_name: eval_Bi_RankNet_HardNeg_v1
+        tags:
+            - evaluation
+            - retriever
+            - bi-encoder
+        use_wandb: true
+model:
+    value:
+        base_name: allenai/scibert_scivocab_uncased
+        batch_size: 256
+        max_length: 512
+        path: models/checkpoints/bi_encoder/20251121_192908/best_model
+seed:
+    value: 42
