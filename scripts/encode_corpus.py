@@ -1,4 +1,4 @@
-# scripts/encode_corpus.py (メモリ安全・高速化版)
+# scripts/encode_corpus.py
 
 import sys
 import os
@@ -8,69 +8,103 @@ import torch
 import sqlite3
 import numpy as np
 import json
+import math
 from tqdm.auto import tqdm
+from torch.utils.data import IterableDataset, DataLoader
 from transformers import AutoTokenizer, AutoConfig
 
 sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
 from src.utils.cleaning import clean_text
 
-def get_total_count(db_path):
-    """DB内の論文総数を取得"""
+def get_db_stats(db_path):
+    """DBの行数と最大rowidを取得"""
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(doi) FROM papers")
-        try:
-            count = cursor.fetchone()[0]
-        except TypeError:
-            count = 0
-    return count
+        # 高速なCount (*)
+        cursor.execute("SELECT MAX(rowid), COUNT(*) FROM papers")
+        max_id, count = cursor.fetchone()
+    return max_id, count
 
-def fetch_data_generator(db_path, batch_size, debug=False):
-    """
-    DBからデータをバッチサイズごとにジェネレートする（メモリ節約型）。
-    """
-    limit_clause = " LIMIT 5000" if debug else ""
-    
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        # カーソルで少しずつ読み込む
-        cursor.execute(f"SELECT doi, abstract FROM papers WHERE abstract IS NOT NULL AND length(abstract) > 10{limit_clause}")
+class SQLiteDataset(IterableDataset):
+    def __init__(self, db_path, max_rowid, debug=False):
+        self.db_path = db_path
+        self.max_rowid = max_rowid
+        self.debug = debug
+
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
         
-        batch_dois = []
-        batch_texts = []
-        
-        while True:
-            # fetchmanyでバッチサイズ分だけ取得（メモリ効率良）
-            rows = cursor.fetchmany(batch_size)
-            if not rows:
-                break
-                
-            for row in rows:
-                doi, abstract = row
-                cleaned = clean_text(abstract)
-                if cleaned:
-                    batch_dois.append(doi)
-                    batch_texts.append(cleaned)
+        # 担当範囲の決定（シャーディング）
+        if worker_info is None:
+            # シングルプロセス
+            start = 0
+            end = self.max_rowid
+        else:
+            # マルチプロセス: 全体をワーカー数で分割
+            per_worker = int(math.ceil((self.max_rowid + 1) / worker_info.num_workers))
+            worker_id = worker_info.id
+            start = worker_id * per_worker
+            end = min(start + per_worker, self.max_rowid + 1)
+
+        # デバッグ時は範囲を極小に
+        if self.debug:
+            end = min(start + 1000, end)
+
+        # DB接続と読み込み
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            # rowidを使って範囲指定読み込み（高速）
+            query = f"""
+                SELECT doi, abstract 
+                FROM papers 
+                WHERE rowid >= ? AND rowid < ? AND abstract IS NOT NULL AND length(abstract) > 10
+            """
+            cursor.execute(query, (start, end))
             
-            # クリーニングで減った分、batch_sizeに満たない場合があるがそのまま送る
-            if batch_dois:
-                yield batch_dois, batch_texts
-                batch_dois = []
-                batch_texts = []
+            while True:
+                # バッチサイズではなく、ある程度まとめてfetchしてPython側でyieldする
+                rows = cursor.fetchmany(1000)
+                if not rows:
+                    break
+                
+                for doi, abstract in rows:
+                    cleaned_text = clean_text(abstract)
+                    if cleaned_text:
+                        yield doi, cleaned_text
+
+class CollateFn:
+    """バッチ化とトークナイズを並列ワーカー内で行うためのCollate関数"""
+    def __init__(self, tokenizer, max_length):
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __call__(self, batch):
+        # batch は [(doi, text), (doi, text), ...] のリスト
+        dois = [item[0] for item in batch]
+        texts = [item[1] for item in batch]
+        
+        # トークナイズ
+        inputs = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt"
+        )
+        return dois, inputs
 
 @hydra.main(config_path="../configs", config_name="evaluate", version_base=None)
 def main(cfg: DictConfig):
-    print("=== Starting Memory-Safe Corpus Encoding ===")
+    print("=== Starting Optimized Corpus Encoding ===")
     print(OmegaConf.to_yaml(cfg))
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
     
-    # FP16 (Mixed Precision) の有効化
     use_fp16 = torch.cuda.is_available()
     if use_fp16:
-        print("🚀 FP16 (Mixed Precision) Enabled for speedup.")
+        print("🚀 FP16 (Mixed Precision) Enabled.")
 
     if not os.path.exists(cfg.data.output_dir):
         os.makedirs(cfg.data.output_dir)
@@ -85,94 +119,100 @@ def main(cfg: DictConfig):
     model.to(device)
     model.eval()
     
+    # コンパイルによる高速化（PyTorch 2.0+）
+    if hasattr(torch, "compile"):
+        try:
+            print("Compiling model...")
+            model = torch.compile(model)
+        except:
+            pass
+
     try:
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.path)
     except:
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.base_name)
 
-    # 2. 総数カウント & Memmap準備
-    total_papers = get_total_count(cfg.data.db_path)
-    if cfg.get("debug", False):
-        total_papers = 5000
-        
-    print(f"Total papers (estimate): {total_papers:,}")
-    hidden_size = config.hidden_size 
+    # 2. DB統計取得とDataset準備
+    print("Analyzing Database...")
+    max_rowid, total_count = get_db_stats(cfg.data.db_path)
+    print(f"Max RowID: {max_rowid}, Total Count: {total_count:,}")
+    
+    dataset = SQLiteDataset(cfg.data.db_path, max_rowid, debug=cfg.get("debug", False))
+    
+    # バッチサイズとワーカー設定
+    batch_size = cfg.model.batch_size
+    num_workers = 4 # CPUコア数に応じて調整（4〜8推奨）
+    
+    collate_fn = CollateFn(tokenizer, cfg.model.max_length)
+    
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        collate_fn=collate_fn,
+        pin_memory=True,
+        prefetch_factor=2 # 各ワーカーが先読みするバッチ数
+    )
+
+    # 3. Memmap準備
+    # デバッグ時はサイズが小さいので調整
+    output_shape = (total_count, config.hidden_size) if not cfg.get("debug", False) else (num_workers * 1000, config.hidden_size)
     
     print(f"Creating memmap file at {embeddings_path}...")
     all_embeddings = np.memmap(
         embeddings_path, 
         dtype='float32', 
         mode='w+', 
-        shape=(total_papers, hidden_size)
+        shape=output_shape
     )
 
-    # 3. 推論ループ
-    batch_size = cfg.model.batch_size
-    # データジェネレータを使用（メモリ安全）
-    data_gen = fetch_data_generator(cfg.data.db_path, batch_size, debug=cfg.get("debug", False))
-    
-    doi_list = [] 
+    # 4. 推論ループ
+    doi_list = []
     current_idx = 0
     
-    # 推論
+    print("Starting inference...")
+    # tqdmのtotalは概算（total_count / batch_size）
+    total_batches = (output_shape[0] // batch_size) + 1
+    
     with torch.no_grad():
-        # tqdmのトータルは概算
-        pbar = tqdm(data_gen, total=(total_papers // batch_size) + 1, desc="Encoding")
-        
-        for batch_dois, batch_texts in pbar:
-            if not batch_texts:
-                continue
-
-            # トークナイズ
-            inputs = tokenizer(
-                batch_texts, 
-                padding=True, 
-                truncation=True, 
-                max_length=cfg.model.max_length, 
-                return_tensors="pt"
-            ).to(device)
+        for batch_dois, batch_inputs in tqdm(dataloader, total=total_batches, desc="Encoding"):
+            # GPU転送 (non_blocking=Trueで高速化)
+            input_ids = batch_inputs['input_ids'].to(device, non_blocking=True)
+            attention_mask = batch_inputs['attention_mask'].to(device, non_blocking=True)
             
-            # FP16 推論 (高速化の肝)
+            # FP16推論
             with torch.amp.autocast('cuda', enabled=use_fp16):
                 outputs = model(
-                    input_ids=inputs['input_ids'],
-                    attention_mask=inputs['attention_mask'],
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
                     output_vectors=True
                 )
                 # float32に戻してCPUへ
                 embeddings = outputs.logits.float().cpu().numpy()
             
-            # 書き込み
             n_samples = len(embeddings)
             
-            # memmapのサイズ超過チェック（推定より多かった場合）
-            if current_idx + n_samples > total_papers:
-                # 必要ならリサイズ等の処理も可能だが、今回は切り捨てるか、
-                # または余裕を持って確保しておく設計にする。
-                # 簡易的にここで打ち切る（総数はget_total_countで正確なはずだが、debug時は注意）
-                if cfg.get("debug", False):
-                    break
-                
-                # 実運用でサイズ不足が起きた場合の緊急回避（はみ出した分は無視）
-                n_samples = total_papers - current_idx
-                embeddings = embeddings[:n_samples]
-                batch_dois = batch_dois[:n_samples]
-
+            # 容量チェック
+            if current_idx + n_samples > output_shape[0]:
+                 # メモリマップの拡張はできないので、はみ出した分は切り捨てるか、
+                 # 本来はもっと大きく確保しておくべき。ここでは安全にbreak
+                 break
+            
             all_embeddings[current_idx : current_idx + n_samples] = embeddings
             doi_list.extend(batch_dois)
             current_idx += n_samples
-            
-            if current_idx >= total_papers:
-                break
 
     print(f"Encoding complete. Valid vectors: {current_idx:,}")
 
-    # 4. DOIマップ保存
+    # 5. DOIマップ保存
     print(f"Saving DOI map to {doi_map_path}...")
     with open(doi_map_path, 'w') as f:
         json.dump(doi_list, f)
+        
+    # 6. メタデータの保存（実際の件数を記録）
+    # 必要ならmemmapをリサイズする処理をここに入れても良いが、
+    # DOIリストの長さとcurrent_idxが一致していれば、読み込み時に制御可能。
 
-    # ディスクへのフラッシュ
     all_embeddings.flush()
     print("Done.")
 
