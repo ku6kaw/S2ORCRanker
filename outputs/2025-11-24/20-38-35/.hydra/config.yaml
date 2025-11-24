@@ -1,0 +1,30 @@
+debug: false
+seed: 42
+logging:
+  use_wandb: true
+  project_name: s2orc-ranker
+  run_name: Bi_RankNet_HardNeg_v3_HighLR
+  tags: []
+data:
+  train_file: data/processed/training_dataset_hard_negatives_1to3.csv
+  val_size: 0.2
+  num_proc: 4
+  format: pair
+model:
+  type: bi_encoder
+  name: allenai/scibert_scivocab_uncased
+  max_length: 512
+  head_type: ranknet
+training:
+  output_dir: ${hydra:runtime.cwd}/models/checkpoints/${model.type}/${logging.run_name}
+  batch_size: 32
+  epochs: 3
+  learning_rate: 2.0e-05
+  head_learning_rate: 0.001
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  margin: 1.0
+  logging_steps: 10
+  eval_steps: 50
+  save_steps: 50
+  save_total_limit: 2

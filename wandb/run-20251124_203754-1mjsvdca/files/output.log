@@ -1,0 +1,68 @@
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading dataset from: data/processed/training_dataset_hard_negatives_1to3.csv
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 22044, Validation set: 6008
+Tokenizing...
+Map (num_proc=4): 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 22044/22044 [00:06<00:00, 3368.11 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6008/6008 [00:01<00:00, 3495.87 examples/s]
+Loading model: allenai/scibert_scivocab_uncased
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Some weights of SiameseBiEncoder were not initialized from the model checkpoint at allenai/scibert_scivocab_uncased and are newly initialized: ['classifier_head.0.bias', 'classifier_head.0.weight', 'classifier_head.2.bias', 'classifier_head.2.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Optimizer Setup: Base LR=2e-05, Head LR=0.001
+Starting training...
+  0%|                                                                                                                                                                    | 0/1035 [00:00<?, ?it/s]Error executing job with overrides: ['debug=false', 'logging.run_name=Bi_RankNet_HardNeg_v3_HighLR', 'model.type=bi_encoder', 'model.head_type=ranknet', 'data.train_file=data/processed/training_dataset_hard_negatives_1to3.csv', 'training.epochs=3', 'training.batch_size=64', 'training.learning_rate=2e-5', 'training.head_learning_rate=1e-3']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 204, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 1859, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2203, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3138, in training_step
+    loss = self.compute_loss(model, inputs)
+  File "/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py", line 25, in compute_loss
+    outputs = model(**inputs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/Projects/S2ORCRanker/src/modeling/bi_encoder.py", line 53, in forward
+    vec_b = self._get_vector(input_ids_b, attention_mask_b)
+  File "/home/kurokawa/Projects/S2ORCRanker/src/modeling/bi_encoder.py", line 29, in _get_vector
+    output = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/bert/modeling_bert.py", line 988, in forward
+    encoder_outputs = self.encoder(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/bert/modeling_bert.py", line 582, in forward
+    layer_outputs = layer_module(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/bert/modeling_bert.py", line 472, in forward
+    self_attention_outputs = self.attention(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/bert/modeling_bert.py", line 402, in forward
+    self_outputs = self.self(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/bert/modeling_bert.py", line 300, in forward
+    attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 96.00 MiB. GPU 0 has a total capacity of 47.42 GiB of which 89.75 MiB is free. Including non-PyTorch memory, this process has 46.76 GiB memory in use. Of the allocated memory 46.42 GiB is allocated by PyTorch, and 35.70 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
