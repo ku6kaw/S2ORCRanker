@@ -1,4 +1,4 @@
-# scripts/encode_corpus.py
+# scripts/encode_corpus.py (メモリ安全・高速化版)
 
 import sys
 import os
@@ -11,7 +11,6 @@ import json
 from tqdm.auto import tqdm
 from transformers import AutoTokenizer, AutoConfig
 
-# srcへのパスを通す
 sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
 from src.utils.cleaning import clean_text
@@ -21,88 +20,83 @@ def get_total_count(db_path):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(doi) FROM papers")
-        count = cursor.fetchone()[0]
+        try:
+            count = cursor.fetchone()[0]
+        except TypeError:
+            count = 0
     return count
 
-def fetch_data_generator(db_path, batch_size):
+def fetch_data_generator(db_path, batch_size, debug=False):
     """
-    DBからデータをバッチサイズごとにジェネレートする。
-    メモリ効率のため、一度に全て読み込まずカーソルを使用。
+    DBからデータをバッチサイズごとにジェネレートする（メモリ節約型）。
     """
+    limit_clause = " LIMIT 5000" if debug else ""
+    
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT doi, abstract FROM papers")
+        # カーソルで少しずつ読み込む
+        cursor.execute(f"SELECT doi, abstract FROM papers WHERE abstract IS NOT NULL AND length(abstract) > 10{limit_clause}")
         
         batch_dois = []
         batch_texts = []
         
-        for row in cursor:
-            doi, abstract = row
-            
-            # テキストがない、あるいは短すぎる場合はスキップ（必要に応じて調整）
-            if not abstract or len(abstract) < 10:
-                continue
+        while True:
+            # fetchmanyでバッチサイズ分だけ取得（メモリ効率良）
+            rows = cursor.fetchmany(batch_size)
+            if not rows:
+                break
                 
-            batch_dois.append(doi)
-            # クリーニング処理（学習時と同じ前処理を適用）
-            batch_texts.append(clean_text(abstract))
+            for row in rows:
+                doi, abstract = row
+                cleaned = clean_text(abstract)
+                if cleaned:
+                    batch_dois.append(doi)
+                    batch_texts.append(cleaned)
             
-            if len(batch_dois) >= batch_size:
+            # クリーニングで減った分、batch_sizeに満たない場合があるがそのまま送る
+            if batch_dois:
                 yield batch_dois, batch_texts
                 batch_dois = []
                 batch_texts = []
-        
-        # 残りのデータ
-        if batch_dois:
-            yield batch_dois, batch_texts
 
 @hydra.main(config_path="../configs", config_name="evaluate", version_base=None)
 def main(cfg: DictConfig):
-    print("=== Starting Corpus Encoding ===")
+    print("=== Starting Memory-Safe Corpus Encoding ===")
     print(OmegaConf.to_yaml(cfg))
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
+    
+    # FP16 (Mixed Precision) の有効化
+    use_fp16 = torch.cuda.is_available()
+    if use_fp16:
+        print("🚀 FP16 (Mixed Precision) Enabled for speedup.")
 
-    # 1. 出力ディレクトリの準備
     if not os.path.exists(cfg.data.output_dir):
         os.makedirs(cfg.data.output_dir)
     
     embeddings_path = os.path.join(cfg.data.output_dir, cfg.data.embeddings_file)
     doi_map_path = os.path.join(cfg.data.output_dir, cfg.data.doi_map_file)
 
-    # 2. モデルとトークナイザのロード
+    # 1. モデルロード
     print(f"Loading model from: {cfg.model.path}")
-    # Configをロードしてモデル構造を特定
     config = AutoConfig.from_pretrained(cfg.model.path)
-    
-    # ★重要: SiameseBiEncoderとしてロード
-    # head_typeは推論時はあまり関係ないが、学習時の設定を引き継ぐ
     model = SiameseBiEncoder.from_pretrained(cfg.model.path, config=config)
     model.to(device)
     model.eval()
     
-    # トークナイザ（学習済みモデルのディレクトリ、なければベース名から）
     try:
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.path)
     except:
-        print(f"Tokenizer not found in model path, loading from base: {cfg.model.base_name}")
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.base_name)
 
-    # 3. 保存用 memmap の準備
-    print(f"Counting total papers in {cfg.data.db_path}...")
+    # 2. 総数カウント & Memmap準備
     total_papers = get_total_count(cfg.data.db_path)
-    print(f"Total papers: {total_papers:,}")
-    
-    # SciBERTの次元数 (768)
+    if cfg.get("debug", False):
+        total_papers = 5000
+        
+    print(f"Total papers (estimate): {total_papers:,}")
     hidden_size = config.hidden_size 
-    
-    # memmapファイルを作成 (書き込みモード)
-    # 形状: (総論文数, 768)
-    # ※ データクリーニングでスキップされる分があるため、少し大きめに確保するか、
-    #    あるいは一旦リストに貯めてから最後に保存する手もあるが、
-    #    1100万件だとメモリが死ぬので、memmapで確保して、実際の件数に合わせてtruncateするのが安全。
-    #    今回は簡易的に「最大数」で確保し、最後にメタデータで有効件数を管理する。
     
     print(f"Creating memmap file at {embeddings_path}...")
     all_embeddings = np.memmap(
@@ -112,38 +106,23 @@ def main(cfg: DictConfig):
         shape=(total_papers, hidden_size)
     )
 
-    # 4. 推論実行ループ
+    # 3. 推論ループ
     batch_size = cfg.model.batch_size
+    # データジェネレータを使用（メモリ安全）
+    data_gen = fetch_data_generator(cfg.data.db_path, batch_size, debug=cfg.get("debug", False))
     
-    if cfg.get("debug", False):
-        print("\n" + "="*50)
-        print(" ⚠️  DEBUG MODE ENABLED: Processing only 10 batches!")
-        print("="*50 + "\n")
-        # ジェネレータを作り直す必要はないが、ループ回数を制限する
-        total_papers = batch_size * 10
-        
-    data_gen = fetch_data_generator(cfg.data.db_path, batch_size)
-    
-    doi_list = [] # インデックス -> DOI のマッピング用
+    doi_list = [] 
     current_idx = 0
     
-    # tqdmのトータルは概算
+    # 推論
     with torch.no_grad():
-        # tqdmのtotalを調整
+        # tqdmのトータルは概算
         pbar = tqdm(data_gen, total=(total_papers // batch_size) + 1, desc="Encoding")
         
-        # ★修正: enumerateでインデックス(i)とデータ((dois, texts))を同時に取得し、1つのループで処理する
-        for i, (batch_dois, batch_texts) in enumerate(pbar):
-            
-            # ▼▼▼ 1. デバッグモード時の脱出判定 ▼▼▼
-            if cfg.get("debug", False) and i >= 10:
-                print("Debug limit reached. Stopping.")
-                break
-            # ▲▲▲ -------------------------------- ▲▲▲
-
+        for batch_dois, batch_texts in pbar:
             if not batch_texts:
                 continue
-        
+
             # トークナイズ
             inputs = tokenizer(
                 batch_texts, 
@@ -153,45 +132,46 @@ def main(cfg: DictConfig):
                 return_tensors="pt"
             ).to(device)
             
-            # 推論 (output_vectors=True でベクトルのみ取得)
-            # SiameseBiEncoder.forward の仕様に合わせる
-            outputs = model(
-                input_ids=inputs['input_ids'],
-                attention_mask=inputs['attention_mask'],
-                output_vectors=True # ★ここがポイント
-            )
+            # FP16 推論 (高速化の肝)
+            with torch.amp.autocast('cuda', enabled=use_fp16):
+                outputs = model(
+                    input_ids=inputs['input_ids'],
+                    attention_mask=inputs['attention_mask'],
+                    output_vectors=True
+                )
+                # float32に戻してCPUへ
+                embeddings = outputs.logits.float().cpu().numpy()
             
-            # ベクトル取得 (Batch, 768)
-            embeddings = outputs.logits.cpu().numpy()
+            # 書き込み
+            n_samples = len(embeddings)
             
-            # memmapに書き込み
-            n_samples = len(batch_dois)
+            # memmapのサイズ超過チェック（推定より多かった場合）
+            if current_idx + n_samples > total_papers:
+                # 必要ならリサイズ等の処理も可能だが、今回は切り捨てるか、
+                # または余裕を持って確保しておく設計にする。
+                # 簡易的にここで打ち切る（総数はget_total_countで正確なはずだが、debug時は注意）
+                if cfg.get("debug", False):
+                    break
+                
+                # 実運用でサイズ不足が起きた場合の緊急回避（はみ出した分は無視）
+                n_samples = total_papers - current_idx
+                embeddings = embeddings[:n_samples]
+                batch_dois = batch_dois[:n_samples]
+
             all_embeddings[current_idx : current_idx + n_samples] = embeddings
-            
-            # DOIリスト更新
             doi_list.extend(batch_dois)
             current_idx += n_samples
+            
+            if current_idx >= total_papers:
+                break
 
     print(f"Encoding complete. Valid vectors: {current_idx:,}")
 
-    # 5. DOIマップの保存
-    # インデックス(行番号) -> DOI の辞書
-    # リストのインデックスがそのままmemmapの行番号に対応
+    # 4. DOIマップ保存
     print(f"Saving DOI map to {doi_map_path}...")
-    
-    # JSONシリアライズ可能な形式に変換（念のため）
     with open(doi_map_path, 'w') as f:
         json.dump(doi_list, f)
 
-    # 6. Memmapのトリミング（もしスキップされたデータがあってサイズが合わない場合）
-    if current_idx < total_papers:
-        print(f"Trimming memmap from {total_papers} to {current_idx}...")
-        # 新しいサイズで再度memmapを開き直すことはできないので、
-        # 別途メタデータとして「有効行数」を記録するか、
-        # 評価スクリプト側で doi_list の長さを信じるように設計する。
-        # ここでは「doi_listの長さ ＝ 有効なベクトル数」とする運用にします。
-        pass
-        
     # ディスクへのフラッシュ
     all_embeddings.flush()
     print("Done.")
