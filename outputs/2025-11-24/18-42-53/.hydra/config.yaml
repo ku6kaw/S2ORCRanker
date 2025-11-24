@@ -1,0 +1,87 @@
+debug: false
+seed: 42
+logging:
+  use_wandb: true
+  project_name: s2orc-ranker
+  run_name: eval_Bi_RankNet_HardNeg_v2_FixLR
+  tags:
+  - evaluation
+  - retriever
+  - bi-encoder
+data:
+  db_path: data/processed/s2orc_filtered.db
+  eval_jsonl_file: data/processed/evaluation_dataset_rich.jsonl
+  output_dir: data/processed/embeddings/Bi_RankNet_HardNeg_v2_FixLR
+  embeddings_file: corpus_embeddings.npy
+  doi_map_file: corpus_doi_map.json
+model:
+  path: models/checkpoints/bi_encoder/20251123_042811/best_model
+  base_name: allenai/scibert_scivocab_uncased
+  max_length: 512
+  batch_size: 256
+evaluation:
+  k_values:
+  - 1
+  - 5
+  - 10
+  - 50
+  - 100
+  - 300
+  - 500
+  - 1000
+  - 2000
+  - 3000
+  - 4000
+  - 5000
+  - 6000
+  - 7000
+  - 8000
+  - 9000
+  - 10000
+  - 11000
+  - 12000
+  - 13000
+  - 14000
+  - 15000
+  - 16000
+  - 17000
+  - 18000
+  - 19000
+  - 20000
+  - 21000
+  - 22000
+  - 23000
+  - 24000
+  - 25000
+  - 26000
+  - 27000
+  - 28000
+  - 29000
+  - 30000
+  - 31000
+  - 32000
+  - 33000
+  - 34000
+  - 35000
+  - 36000
+  - 37000
+  - 38000
+  - 39000
+  - 40000
+  - 41000
+  - 42000
+  - 43000
+  - 44000
+  - 45000
+  - 46000
+  - 47000
+  - 48000
+  - 49000
+  - 50000
+  result_file: evaluation_results.json
+  use_faiss: true
+  gpu_search: false
+  save_candidates: true
+  candidates_file: candidates_for_reranking.json
+  candidates_k: 50000
+  calc_full_rank: true
