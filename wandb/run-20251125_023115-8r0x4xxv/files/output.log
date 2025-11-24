@@ -1,0 +1,67 @@
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading dataset from: data/processed/training_dataset_hard_negatives_1to3.csv
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 22044, Validation set: 6008
+Tokenizing...
+Map (num_proc=4): 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 22044/22044 [00:06<00:00, 3440.41 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6008/6008 [00:01<00:00, 3566.16 examples/s]
+Loading model: allenai/scibert_scivocab_uncased
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Bi-Encoder Head Type: none
+Using ContrastiveTrainer (Distance-based)
+Early stopping enabled with patience: 3
+Starting training...
+                                                                                                                                                                                                  
+{'loss': 47.534, 'grad_norm': 1146.9376220703125, 'learning_rate': 9.66183574879227e-08, 'epoch': 0.01}
+{'loss': 42.5072, 'grad_norm': 619.4379272460938, 'learning_rate': 1.932367149758454e-07, 'epoch': 0.03}
+{'loss': 45.8512, 'grad_norm': 1119.3428955078125, 'learning_rate': 2.898550724637681e-07, 'epoch': 0.04}
+{'loss': 59.5586, 'grad_norm': 1374.361328125, 'learning_rate': 3.864734299516908e-07, 'epoch': 0.06}
+{'loss': 39.1005, 'grad_norm': 793.2103881835938, 'learning_rate': 4.830917874396135e-07, 'epoch': 0.07}
+                                                                                                                                                                                                  
+{'eval_loss': 36.809627532958984, 'eval_runtime': 92.0024, 'eval_samples_per_second': 65.303, 'eval_steps_per_second': 2.043, 'epoch': 0.07}
+{'loss': 47.3411, 'grad_norm': 1237.9296875, 'learning_rate': 5.797101449275362e-07, 'epoch': 0.09}
+{'loss': 29.6352, 'grad_norm': 305.6481018066406, 'learning_rate': 6.763285024154589e-07, 'epoch': 0.1}
+{'loss': 30.4983, 'grad_norm': 613.723876953125, 'learning_rate': 7.729468599033816e-07, 'epoch': 0.12}
+{'loss': 29.1306, 'grad_norm': 322.5437316894531, 'learning_rate': 8.695652173913043e-07, 'epoch': 0.13}
+{'loss': 30.652, 'grad_norm': 797.725341796875, 'learning_rate': 9.66183574879227e-07, 'epoch': 0.15}
+{'eval_loss': 18.106876373291016, 'eval_runtime': 92.3249, 'eval_samples_per_second': 65.075, 'eval_steps_per_second': 2.036, 'epoch': 0.15}
+{'loss': 21.5927, 'grad_norm': 175.02099609375, 'learning_rate': 1.0628019323671499e-06, 'epoch': 0.16}
+{'loss': 17.5289, 'grad_norm': 709.4302978515625, 'learning_rate': 1.1594202898550724e-06, 'epoch': 0.17}
+{'loss': 14.8774, 'grad_norm': 307.82464599609375, 'learning_rate': 1.2560386473429952e-06, 'epoch': 0.19}
+{'loss': 10.8742, 'grad_norm': 165.3876190185547, 'learning_rate': 1.3526570048309178e-06, 'epoch': 0.2}
+{'loss': 10.1278, 'grad_norm': 167.81980895996094, 'learning_rate': 1.4492753623188406e-06, 'epoch': 0.22}
+{'eval_loss': 5.478758811950684, 'eval_runtime': 92.269, 'eval_samples_per_second': 65.114, 'eval_steps_per_second': 2.038, 'epoch': 0.22}
+{'loss': 5.4223, 'grad_norm': 48.65628433227539, 'learning_rate': 1.5458937198067632e-06, 'epoch': 0.23}
+{'loss': 4.3769, 'grad_norm': 67.3720703125, 'learning_rate': 1.642512077294686e-06, 'epoch': 0.25}
+{'loss': 2.8484, 'grad_norm': 26.319616317749023, 'learning_rate': 1.7391304347826085e-06, 'epoch': 0.26}
+{'loss': 2.1164, 'grad_norm': 42.74113464355469, 'learning_rate': 1.8357487922705313e-06, 'epoch': 0.28}
+{'loss': 1.3539, 'grad_norm': 20.93683433532715, 'learning_rate': 1.932367149758454e-06, 'epoch': 0.29}
+{'eval_loss': 0.7136111855506897, 'eval_runtime': 92.2326, 'eval_samples_per_second': 65.14, 'eval_steps_per_second': 2.038, 'epoch': 0.29}
+{'loss': 1.0328, 'grad_norm': 9.260832786560059, 'learning_rate': 1.996774193548387e-06, 'epoch': 0.3}
+{'loss': 0.605, 'grad_norm': 4.148200988769531, 'learning_rate': 1.986021505376344e-06, 'epoch': 0.32}
+{'loss': 0.5786, 'grad_norm': 6.033070087432861, 'learning_rate': 1.975268817204301e-06, 'epoch': 0.33}
+{'loss': 0.4123, 'grad_norm': 6.194183826446533, 'learning_rate': 1.964516129032258e-06, 'epoch': 0.35}
+{'loss': 0.3064, 'grad_norm': 4.362122058868408, 'learning_rate': 1.953763440860215e-06, 'epoch': 0.36}
+{'eval_loss': 0.33784961700439453, 'eval_runtime': 92.2046, 'eval_samples_per_second': 65.159, 'eval_steps_per_second': 2.039, 'epoch': 0.36}
+{'loss': 0.2486, 'grad_norm': 2.6441657543182373, 'learning_rate': 1.9430107526881722e-06, 'epoch': 0.38}
+{'loss': 0.2449, 'grad_norm': 3.6121511459350586, 'learning_rate': 1.932258064516129e-06, 'epoch': 0.39}
+{'loss': 0.212, 'grad_norm': 1.8163886070251465, 'learning_rate': 1.9215053763440857e-06, 'epoch': 0.41}
+{'loss': 0.2106, 'grad_norm': 2.371464252471924, 'learning_rate': 1.910752688172043e-06, 'epoch': 0.42}
+{'loss': 0.2235, 'grad_norm': 2.04764723777771, 'learning_rate': 1.8999999999999998e-06, 'epoch': 0.44}
+{'eval_loss': 0.40590280294418335, 'eval_runtime': 92.1942, 'eval_samples_per_second': 65.167, 'eval_steps_per_second': 2.039, 'epoch': 0.44}
+{'loss': 0.2101, 'grad_norm': 2.267756223678589, 'learning_rate': 1.8892473118279568e-06, 'epoch': 0.45}
+{'loss': 0.1827, 'grad_norm': 1.8420240879058838, 'learning_rate': 1.878494623655914e-06, 'epoch': 0.46}
+{'loss': 0.2215, 'grad_norm': 1.8221919536590576, 'learning_rate': 1.8677419354838709e-06, 'epoch': 0.48}
+{'loss': 0.2063, 'grad_norm': 2.166466474533081, 'learning_rate': 1.8569892473118278e-06, 'epoch': 0.49}
+{'loss': 0.195, 'grad_norm': 2.10162615776062, 'learning_rate': 1.8462365591397847e-06, 'epoch': 0.51}
+{'eval_loss': 0.4297255873680115, 'eval_runtime': 92.1554, 'eval_samples_per_second': 65.194, 'eval_steps_per_second': 2.04, 'epoch': 0.51}
+{'loss': 0.1982, 'grad_norm': 1.8864785432815552, 'learning_rate': 1.835483870967742e-06, 'epoch': 0.52}
+{'loss': 0.2067, 'grad_norm': 2.072309970855713, 'learning_rate': 1.8247311827956988e-06, 'epoch': 0.54}
+{'loss': 0.2092, 'grad_norm': 1.9421485662460327, 'learning_rate': 1.8139784946236558e-06, 'epoch': 0.55}
+{'loss': 0.1956, 'grad_norm': 1.6232795715332031, 'learning_rate': 1.8032258064516127e-06, 'epoch': 0.57}
+{'loss': 0.1925, 'grad_norm': 1.6019750833511353, 'learning_rate': 1.7924731182795699e-06, 'epoch': 0.58}
+{'eval_loss': 0.44633108377456665, 'eval_runtime': 92.1797, 'eval_samples_per_second': 65.177, 'eval_steps_per_second': 2.039, 'epoch': 0.58}
+{'train_runtime': 1293.4521, 'train_samples_per_second': 51.128, 'train_steps_per_second': 1.598, 'train_loss': 12.475504026412963, 'epoch': 0.58}
+Saving best model to /home/kurokawa/Projects/S2ORCRanker/models/checkpoints/bi_encoder/Bi_Contrastive_noHead/best_model

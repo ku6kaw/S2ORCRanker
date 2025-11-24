@@ -5,36 +5,55 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import Trainer
 
-class BiEncoderPairTrainer(Trainer):
+class ContrastiveTrainer(Trainer):
     """
-    分類ヘッド付きBi-Encoder用Trainer。
-    モデルが出力するスコア(logits)と、正解ラベル(0/1)でBCEWithLogitsLossを計算します。
+    Bi-Encoder用: Contrastive Loss (距離学習) を使用するTrainer。
+    モデル出力 (vec_a, vec_b) を期待する。
     """
-    # ▼▼▼ 追加: marginを受け取るための__init__ ▼▼▼
     def __init__(self, *args, margin=1.0, **kwargs):
-        # marginはBCEでは使わないが、run_train.pyから渡されるため
-        # ここで受け取って消費し、親クラス(Trainer)には渡さないようにする
         super().__init__(*args, **kwargs)
-        self.margin = margin # 一応保持しておく（使わない）
+        self.margin = margin
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        # ラベルを取り出す
         labels = inputs.pop("labels")
-        
-        # モデルの推論
         outputs = model(**inputs)
         
-        # モデル出力は (batch_size, 1) の形状をしているため、(batch_size) に変形
+        # SiameseBiEncoder(head_type="none") は logits=(vec_a, vec_b) を返す
+        vec_a, vec_b = outputs.logits
+        
+        distance = F.pairwise_distance(vec_a, vec_b)
+        
+        loss_positive = distance.pow(2)
+        loss_negative = F.relu(self.margin - distance).pow(2)
+        
+        # ラベル定義: 1=Positive, 0=Negative
+        loss = (labels.float() * loss_positive) + ((1 - labels.float()) * loss_negative)
+        loss = loss.mean()
+
+        return (loss, outputs) if return_outputs else loss
+
+class BiEncoderPairTrainer(Trainer):
+    """
+    Bi-Encoder用: 分類ヘッドあり (RankNet/BCE) を使用するTrainer。
+    モデル出力 score を期待する。
+    """
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        
+        # SiameseBiEncoder(head_type="ranknet") は logits=score を返す
         scores = outputs.logits.squeeze(-1)
         
-        # BCEWithLogitsLoss (Sigmoid + BCE) で損失を計算
         loss_fct = nn.BCEWithLogitsLoss()
         loss = loss_fct(scores, labels.float())
 
         return (loss, outputs) if return_outputs else loss
 
 class MarginRankingTrainer(Trainer):
-    """Cross-Encoder用: Margin Ranking Loss を使用するTrainer"""
+    """
+    Cross-Encoder用: Margin Ranking Loss を使用するTrainer。
+    (Pos, Neg) のTriplet入力を期待する。
+    """
     def __init__(self, *args, margin=1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.margin = margin
@@ -45,7 +64,7 @@ class MarginRankingTrainer(Trainer):
             inputs.pop("labels")
             
         outputs = model(**inputs)
-        # (pos_score, neg_score) のペア
+        # CrossEncoderMarginModelは (pos_score, neg_score) を返す
         score_pos, score_neg = outputs.logits
         
         target = torch.ones_like(score_pos)

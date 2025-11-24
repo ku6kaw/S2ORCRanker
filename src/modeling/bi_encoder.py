@@ -1,3 +1,5 @@
+# src/modeling/bi_encoder.py
+
 import torch
 import torch.nn as nn
 from transformers import BertPreTrainedModel, AutoModel
@@ -5,27 +7,28 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 
 class SiameseBiEncoder(BertPreTrainedModel):
     """
-    SciBERTなどをバックボーンとし、SBERT流の分類ヘッド(差・積の結合)を持つSiameseモデル。
-    RankNet LossやSoftmax Lossなどで学習可能。
+    SciBERTなどをバックボーンとするSiameseモデル。
+    head_type="ranknet": 分類ヘッドあり (RankNet/BCE用)
+    head_type="none":    分類ヘッドなし (Contrastive/Triplet用)
     """
-    def __init__(self, config):
+    def __init__(self, config, head_type="ranknet"): # ★引数追加 (デフォルトはranknetで互換性維持)
         super().__init__(config)
+        self.head_type = head_type
         
         # エンコーダー部分 (SciBERT)
         self.bert = AutoModel.from_config(config)
         
-        # SBERT流の分類ヘッド
-        # 特徴量: [u, v, |u-v|, u*v] -> 4倍の次元 (768 * 4 = 3072)
-        self.classifier_head = nn.Sequential(
-            nn.Linear(config.hidden_size * 4, config.hidden_size),
-            nn.ReLU(),
-            nn.Linear(config.hidden_size, 1) # スカラー値（スコア）を出力
-        )
+        # 分類ヘッドの作成 (ranknetの場合のみ)
+        if self.head_type == "ranknet":
+            self.classifier_head = nn.Sequential(
+                nn.Linear(config.hidden_size * 4, config.hidden_size),
+                nn.ReLU(),
+                nn.Linear(config.hidden_size, 1)
+            )
         
         self.post_init()
 
     def _get_vector(self, input_ids, attention_mask):
-        """アブストラクトをベクトル化する（CLSトークン使用）"""
         output = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         return output.pooler_output
 
@@ -35,45 +38,42 @@ class SiameseBiEncoder(BertPreTrainedModel):
         attention_mask=None,
         input_ids_b=None,
         attention_mask_b=None,
-        input_ids_c=None,      # Tripletなどで3つ目の入力がある場合
+        input_ids_c=None,
         attention_mask_c=None,
         labels=None,
-        output_vectors=False,  # 推論用: Trueならスコアではなくベクトルを返す
+        output_vectors=False,
         **kwargs
     ):
-        # 1. Anchor (Query) のベクトル化
+        # 1. Anchor
         vec_a = self._get_vector(input_ids, attention_mask)
         
-        # --- 推論モード（ベクトル化のみ） ---
-        # 検索インデックス作成時などは、ここでベクトルだけを返して終了
+        # 推論用
         if output_vectors or (input_ids_b is None):
             return SequenceClassifierOutput(logits=vec_a)
 
-        # 2. Positive / Candidate のベクトル化
+        # 2. Positive / Candidate
         vec_b = self._get_vector(input_ids_b, attention_mask_b)
         
-        # --- ペアのスコア計算 (分類ヘッド使用) ---
-        # 特徴量生成: u, v, |u-v|, u*v
+        # --- ★分岐: ヘッドなし (Contrastive) ---
+        if self.head_type == "none":
+            # ベクトルそのものを返す -> ContrastiveTrainerで距離計算する
+            return SequenceClassifierOutput(loss=None, logits=(vec_a, vec_b))
+
+        # --- ★分岐: ヘッドあり (RankNet) ---
         diff = torch.abs(vec_a - vec_b)
         prod = vec_a * vec_b
         features = torch.cat([vec_a, vec_b, diff, prod], dim=1)
         
-        # ヘッドに通してスコア算出
         score_pos = self.classifier_head(features)
 
-        # 3. Negativeがある場合 (Triplet的な入力の場合)
+        # 3. Negativeがある場合 (Triplet的入力)
         score_neg = None
         if input_ids_c is not None:
             vec_c = self._get_vector(input_ids_c, attention_mask_c)
-            
             diff_c = torch.abs(vec_a - vec_c)
             prod_c = vec_a * vec_c
             features_c = torch.cat([vec_a, vec_c, diff_c, prod_c], dim=1)
-            
             score_neg = self.classifier_head(features_c)
-            
-            # 戻り値: (Positiveスコア, Negativeスコア)
             return SequenceClassifierOutput(loss=None, logits=(score_pos, score_neg))
 
-        # 戻り値: (Positiveスコア)
         return SequenceClassifierOutput(loss=None, logits=score_pos)

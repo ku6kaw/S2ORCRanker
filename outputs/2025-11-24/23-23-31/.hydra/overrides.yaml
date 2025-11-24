@@ -1,0 +1,8 @@
+- debug=false
+- logging.run_name=Bi_Contrastive_noHead
+- model.type=bi_encoder
+- model.head_type=none
+- training.epochs=3
+- training.batch_size=32
+- training.learning_rate=2e-6
+- training.margin=1.0

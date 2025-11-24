@@ -5,7 +5,7 @@ import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import torch
-from transformers import AutoTokenizer, TrainingArguments, AutoConfig
+from transformers import AutoTokenizer, TrainingArguments, AutoConfig, EarlyStoppingCallback
 from torch.optim import AdamW
 import wandb
 import numpy as np
@@ -17,7 +17,7 @@ sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
 from src.modeling.cross_encoder import CrossEncoderMarginModel
 from src.training.dataset import TextRankingDataset
-from src.training.trainer import BiEncoderPairTrainer, MarginRankingTrainer
+from src.training.trainer import BiEncoderPairTrainer, MarginRankingTrainer, ContrastiveTrainer
 
 def create_optimizer_grouped_parameters(model, base_lr, head_lr, weight_decay):
     """
@@ -118,50 +118,65 @@ def compute_metrics(eval_pred):
 @hydra.main(config_path="../configs", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     print(f"=== Starting Training: {cfg.model.type} ===")
-    
-    # Configの内容を表示
     print(OmegaConf.to_yaml(cfg))
     
-    # ★ WandBの初期化
     if cfg.logging.use_wandb:
         wandb.init(
             project=cfg.logging.project_name,
             name=cfg.logging.run_name,
             tags=cfg.logging.tags,
-            config=OmegaConf.to_container(cfg, resolve=True) # Hydraの設定をWandBに保存
+            config=OmegaConf.to_container(cfg, resolve=True)
         )
     
-    # 1. トークナイザ
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.name)
-    
-    # 2. データセット
     dataset_handler = TextRankingDataset(cfg, tokenizer)
     tokenized_datasets = dataset_handler.load_and_prepare()
     
-    # 3. モデル
     print(f"Loading model: {cfg.model.name}")
     model_config = AutoConfig.from_pretrained(cfg.model.name)
     
+    # --- ★ Trainerとモデルの選択ロジック (修正) ---
+    compute_metrics_func = None
+
     if cfg.model.type == "cross_encoder":
+        # Cross-Encoderの場合
         model_config.num_labels = 1
         model = CrossEncoderMarginModel.from_pretrained(cfg.model.name, config=model_config)
         trainer_cls = MarginRankingTrainer
-    else:
-        model = SiameseBiEncoder.from_pretrained(cfg.model.name, config=model_config)
-        trainer_cls = BiEncoderPairTrainer 
+        
+    else: # bi_encoder
+        # 設定からhead_typeを取得 (デフォルトはranknet)
+        head_type = cfg.model.get("head_type", "ranknet")
+        print(f"Bi-Encoder Head Type: {head_type}")
+        
+        # モデル初期化時に head_type を渡す
+        model = SiameseBiEncoder.from_pretrained(
+            cfg.model.name, 
+            config=model_config, 
+            head_type=head_type
+        )
+        
+        if head_type == "none":
+            # ヘッドなし -> 距離学習 (ContrastiveTrainer)
+            print("Using ContrastiveTrainer (Distance-based)")
+            trainer_cls = ContrastiveTrainer
+            # Contrastiveの場合、BCE用のmetrics計算は適用できないためNoneのままにする
+        else:
+            # ヘッドあり -> 分類学習 (BiEncoderPairTrainer)
+            print("Using BiEncoderPairTrainer (Classification Head)")
+            trainer_cls = BiEncoderPairTrainer
+            compute_metrics_func = compute_metrics # 以前定義した関数
 
-    # 4. オプティマイザ (学習率差別化)
+    # 4. オプティマイザ作成
     base_lr = cfg.training.learning_rate
     head_lr = cfg.training.get("head_learning_rate", base_lr)
-    print(f"Optimizer Setup: Base LR={base_lr}, Head LR={head_lr}")
     
     optimizer_grouped_parameters = create_optimizer_grouped_parameters(
         model, base_lr, head_lr, cfg.training.weight_decay
     )
     optimizer = AdamW(optimizer_grouped_parameters)
 
-    # 5. Training Arguments
-    # 出力ディレクトリの作成（Hydraが自動解決したパス）
+    # 5. Arguments
     output_dir = cfg.training.output_dir
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -182,12 +197,19 @@ def main(cfg: DictConfig):
         save_steps=cfg.training.save_steps,
         save_total_limit=cfg.training.save_total_limit,
         load_best_model_at_end=True,
-        # ★ WandBへのレポート設定
         report_to="wandb" if cfg.logging.use_wandb else "none",
         run_name=cfg.logging.run_name, 
         remove_unused_columns=False,
+        metric_for_best_model="loss",
+        greater_is_better=False,
     )
     
+    # ★ コールバックの準備
+    callbacks = []
+    if cfg.training.get("patience"):
+        print(f"Early stopping enabled with patience: {cfg.training.patience}")
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=cfg.training.patience))
+        
     # 6. Trainer初期化
     trainer = trainer_cls(
         model=model,
@@ -197,18 +219,17 @@ def main(cfg: DictConfig):
         tokenizer=tokenizer,
         margin=cfg.training.margin,
         optimizers=(optimizer, None),
-        compute_metrics=compute_metrics if cfg.model.type == "bi_encoder" else None
+        compute_metrics=compute_metrics_func,
+        callbacks=callbacks
     )
     
     print("Starting training...")
     trainer.train()
     
-    # ベストモデルの保存
     best_model_path = os.path.join(output_dir, "best_model")
     print(f"Saving best model to {best_model_path}")
     trainer.save_model(best_model_path)
     
-    # ★ WandB終了処理
     if cfg.logging.use_wandb:
         wandb.finish()
 

@@ -1,0 +1,163 @@
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading dataset from: data/processed/training_dataset_hard_negatives_1to3.csv
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 22044, Validation set: 6008
+Tokenizing...
+Map (num_proc=4): 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 22044/22044 [00:06<00:00, 3404.10 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6008/6008 [00:01<00:00, 3486.06 examples/s]
+Loading model: allenai/scibert_scivocab_uncased
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Bi-Encoder Head Type: none
+Using ContrastiveTrainer (Distance-based)
+Starting training...
+                                                                                                                                                                                                  
+{'loss': 46.6256, 'grad_norm': 1164.2860107421875, 'learning_rate': 9.66183574879227e-07, 'epoch': 0.01}
+{'loss': 36.4837, 'grad_norm': 459.9911193847656, 'learning_rate': 1.932367149758454e-06, 'epoch': 0.03}
+{'loss': 31.5845, 'grad_norm': 811.2664184570312, 'learning_rate': 2.8985507246376816e-06, 'epoch': 0.04}
+{'loss': 26.3246, 'grad_norm': 340.0756530761719, 'learning_rate': 3.864734299516908e-06, 'epoch': 0.06}
+{'loss': 9.1151, 'grad_norm': 65.93695831298828, 'learning_rate': 4.830917874396135e-06, 'epoch': 0.07}
+                                                                                                                                                                                                  
+{'eval_loss': 5.573978900909424, 'eval_runtime': 91.8221, 'eval_samples_per_second': 65.431, 'eval_steps_per_second': 2.047, 'epoch': 0.07}
+{'loss': 4.9861, 'grad_norm': 94.09041595458984, 'learning_rate': 5.797101449275363e-06, 'epoch': 0.09}
+{'loss': 1.58, 'grad_norm': 6.644604682922363, 'learning_rate': 6.76328502415459e-06, 'epoch': 0.1}
+{'loss': 0.6148, 'grad_norm': 4.886696815490723, 'learning_rate': 7.729468599033817e-06, 'epoch': 0.12}
+{'loss': 0.2779, 'grad_norm': 2.297672986984253, 'learning_rate': 8.695652173913044e-06, 'epoch': 0.13}
+{'loss': 0.2422, 'grad_norm': 2.0025670528411865, 'learning_rate': 9.66183574879227e-06, 'epoch': 0.15}
+{'eval_loss': 0.4699447751045227, 'eval_runtime': 92.244, 'eval_samples_per_second': 65.132, 'eval_steps_per_second': 2.038, 'epoch': 0.15}
+{'loss': 0.2093, 'grad_norm': 1.9679197072982788, 'learning_rate': 1.0628019323671499e-05, 'epoch': 0.16}
+{'loss': 0.2243, 'grad_norm': 2.6063268184661865, 'learning_rate': 1.1594202898550726e-05, 'epoch': 0.17}
+{'loss': 0.1911, 'grad_norm': 1.737493872642517, 'learning_rate': 1.2560386473429953e-05, 'epoch': 0.19}
+{'loss': 0.2048, 'grad_norm': 1.7278668880462646, 'learning_rate': 1.352657004830918e-05, 'epoch': 0.2}
+{'loss': 0.2246, 'grad_norm': 1.7930314540863037, 'learning_rate': 1.4492753623188407e-05, 'epoch': 0.22}
+{'eval_loss': 0.5985802412033081, 'eval_runtime': 92.2049, 'eval_samples_per_second': 65.159, 'eval_steps_per_second': 2.039, 'epoch': 0.22}
+{'loss': 0.1913, 'grad_norm': 1.580289602279663, 'learning_rate': 1.5458937198067633e-05, 'epoch': 0.23}
+{'loss': 0.3724, 'grad_norm': 2.125842332839966, 'learning_rate': 1.6425120772946863e-05, 'epoch': 0.25}
+{'loss': 0.1823, 'grad_norm': 1.4759653806686401, 'learning_rate': 1.739130434782609e-05, 'epoch': 0.26}
+{'loss': 0.192, 'grad_norm': 2.1242759227752686, 'learning_rate': 1.8357487922705315e-05, 'epoch': 0.28}
+{'loss': 0.1925, 'grad_norm': 1.3431074619293213, 'learning_rate': 1.932367149758454e-05, 'epoch': 0.29}
+{'eval_loss': 0.5542689561843872, 'eval_runtime': 92.1761, 'eval_samples_per_second': 65.18, 'eval_steps_per_second': 2.04, 'epoch': 0.29}
+{'loss': 0.1934, 'grad_norm': 1.4294660091400146, 'learning_rate': 1.9967741935483872e-05, 'epoch': 0.3}
+{'loss': 0.1914, 'grad_norm': 1.6792576313018799, 'learning_rate': 1.9860215053763442e-05, 'epoch': 0.32}
+{'loss': 0.2023, 'grad_norm': 1.9698069095611572, 'learning_rate': 1.9752688172043012e-05, 'epoch': 0.33}
+{'loss': 0.2059, 'grad_norm': 2.9867377281188965, 'learning_rate': 1.9645161290322582e-05, 'epoch': 0.35}
+{'loss': 0.2053, 'grad_norm': 1.3588553667068481, 'learning_rate': 1.9537634408602152e-05, 'epoch': 0.36}
+{'eval_loss': 0.5433928370475769, 'eval_runtime': 92.1404, 'eval_samples_per_second': 65.205, 'eval_steps_per_second': 2.04, 'epoch': 0.36}
+{'loss': 0.1921, 'grad_norm': 1.5469167232513428, 'learning_rate': 1.943010752688172e-05, 'epoch': 0.38}
+{'loss': 0.1928, 'grad_norm': 2.3518259525299072, 'learning_rate': 1.932258064516129e-05, 'epoch': 0.39}
+{'loss': 0.1787, 'grad_norm': 1.5086033344268799, 'learning_rate': 1.921505376344086e-05, 'epoch': 0.41}
+{'loss': 0.1941, 'grad_norm': 7.596512794494629, 'learning_rate': 1.910752688172043e-05, 'epoch': 0.42}
+{'loss': 0.1944, 'grad_norm': 1.4780741930007935, 'learning_rate': 1.9e-05, 'epoch': 0.44}
+{'eval_loss': 0.5225790143013, 'eval_runtime': 92.0989, 'eval_samples_per_second': 65.234, 'eval_steps_per_second': 2.041, 'epoch': 0.44}
+{'loss': 0.2029, 'grad_norm': 1.8207186460494995, 'learning_rate': 1.889247311827957e-05, 'epoch': 0.45}
+{'loss': 0.1708, 'grad_norm': 1.8425236940383911, 'learning_rate': 1.878494623655914e-05, 'epoch': 0.46}
+{'loss': 0.205, 'grad_norm': 1.2522308826446533, 'learning_rate': 1.867741935483871e-05, 'epoch': 0.48}
+{'loss': 0.1976, 'grad_norm': 1.6917825937271118, 'learning_rate': 1.856989247311828e-05, 'epoch': 0.49}
+{'loss': 0.1871, 'grad_norm': 1.8815525770187378, 'learning_rate': 1.846236559139785e-05, 'epoch': 0.51}
+{'eval_loss': 0.5360896587371826, 'eval_runtime': 92.108, 'eval_samples_per_second': 65.228, 'eval_steps_per_second': 2.041, 'epoch': 0.51}
+{'loss': 0.1903, 'grad_norm': 1.4026963710784912, 'learning_rate': 1.835483870967742e-05, 'epoch': 0.52}
+{'loss': 0.2073, 'grad_norm': 1.4155908823013306, 'learning_rate': 1.824731182795699e-05, 'epoch': 0.54}
+{'loss': 0.2008, 'grad_norm': 1.287031888961792, 'learning_rate': 1.813978494623656e-05, 'epoch': 0.55}
+{'loss': 0.1899, 'grad_norm': 1.2418620586395264, 'learning_rate': 1.803225806451613e-05, 'epoch': 0.57}
+{'loss': 0.1857, 'grad_norm': 1.2014225721359253, 'learning_rate': 1.79247311827957e-05, 'epoch': 0.58}
+{'eval_loss': 0.5315226316452026, 'eval_runtime': 92.0934, 'eval_samples_per_second': 65.238, 'eval_steps_per_second': 2.041, 'epoch': 0.58}
+{'loss': 0.174, 'grad_norm': 1.394842267036438, 'learning_rate': 1.781720430107527e-05, 'epoch': 0.6}
+{'loss': 0.187, 'grad_norm': 1.4475476741790771, 'learning_rate': 1.770967741935484e-05, 'epoch': 0.61}
+{'loss': 0.1932, 'grad_norm': 1.7241787910461426, 'learning_rate': 1.760215053763441e-05, 'epoch': 0.62}
+{'loss': 0.158, 'grad_norm': 2.486905813217163, 'learning_rate': 1.749462365591398e-05, 'epoch': 0.64}
+{'loss': 0.1842, 'grad_norm': 1.5075570344924927, 'learning_rate': 1.738709677419355e-05, 'epoch': 0.65}
+{'eval_loss': 0.5048308968544006, 'eval_runtime': 92.1133, 'eval_samples_per_second': 65.224, 'eval_steps_per_second': 2.041, 'epoch': 0.65}
+{'loss': 0.1816, 'grad_norm': 1.7986527681350708, 'learning_rate': 1.727956989247312e-05, 'epoch': 0.67}
+{'loss': 0.1983, 'grad_norm': 1.6010360717773438, 'learning_rate': 1.717204301075269e-05, 'epoch': 0.68}
+{'loss': 0.1785, 'grad_norm': 1.4264698028564453, 'learning_rate': 1.706451612903226e-05, 'epoch': 0.7}
+{'loss': 0.1906, 'grad_norm': 1.4311184883117676, 'learning_rate': 1.6956989247311832e-05, 'epoch': 0.71}
+{'loss': 0.1648, 'grad_norm': 1.6129671335220337, 'learning_rate': 1.6849462365591402e-05, 'epoch': 0.73}
+    return tensor.to(device, non_blocking=non_blocking)
+TypeError: BatchEncoding.to() got an unexpected keyword argument 'non_blocking'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 228, in <module>
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 218, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 1859, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2278, in _inner_training_loop
+    self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2662, in _maybe_log_save_evaluate
+    metrics = self.evaluate(ignore_keys=ignore_keys_for_eval)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3467, in evaluate
+    output = eval_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3640, in evaluation_loop
+    for step, inputs in enumerate(dataloader):
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/data_loader.py", line 577, in __iter__
+    current_batch = send_to_device(current_batch, self.device, non_blocking=self._non_blocking)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/utils/operations.py", line 156, in send_to_device
+    return tensor.to(device)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 800, in to
+    self.data = {k: v.to(device=device) for k, v in self.data.items()}
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 800, in <dictcomp>
+    self.data = {k: v.to(device=device) for k, v in self.data.items()}
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/utils/operations.py", line 154, in send_to_device
+    return tensor.to(device, non_blocking=non_blocking)
+TypeError: BatchEncoding.to() got an unexpected keyword argument 'non_blocking'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 228, in <module>
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 218, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 1859, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2278, in _inner_training_loop
+    self._maybe_log_save_evaluate(tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2662, in _maybe_log_save_evaluate
+    metrics = self.evaluate(ignore_keys=ignore_keys_for_eval)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3467, in evaluate
+    output = eval_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3640, in evaluation_loop
+    for step, inputs in enumerate(dataloader):
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/data_loader.py", line 577, in __iter__
+    current_batch = send_to_device(current_batch, self.device, non_blocking=self._non_blocking)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/utils/operations.py", line 156, in send_to_device
+    return tensor.to(device)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 800, in to
+    self.data = {k: v.to(device=device) for k, v in self.data.items()}
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 800, in <dictcomp>
+    self.data = {k: v.to(device=device) for k, v in self.data.items()}
+KeyboardInterrupt
