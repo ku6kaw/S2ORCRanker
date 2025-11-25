@@ -1,0 +1,26 @@
+2025-11-26 02:38:08,618 INFO    MainThread:3330020 [wandb_setup.py:_flush():80] Current SDK version is 0.23.0
+2025-11-26 02:38:08,618 INFO    MainThread:3330020 [wandb_setup.py:_flush():80] Configure stats pid to 3330020
+2025-11-26 02:38:08,618 INFO    MainThread:3330020 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/.config/wandb/settings
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/Projects/S2ORCRanker/wandb/settings
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_init.py:setup_run_log_directory():713] Logging user logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251126_023808-z5x4pr6k/logs/debug.log
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_init.py:setup_run_log_directory():714] Logging internal logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251126_023808-z5x4pr6k/logs/debug-internal.log
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_init.py:init():840] calling init triggers
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_init.py:init():845] wandb.init called with sweep_config: {}
+config: {'debug': False, 'seed': 42, 'logging': {'use_wandb': True, 'project_name': 's2orc-ranker', 'run_name': 'eval_Bi_RankNet_Random_neg_SameLR_50q', 'tags': ['evaluation', 'retriever', 'bi-encoder']}, 'data': {'db_path': 'data/processed/s2orc_filtered.db', 'eval_jsonl_file': 'data/processed/evaluation_dataset_rich.jsonl', 'output_dir': 'data/processed/embeddings/Bi_RankNet_Random_neg_SameLR', 'embeddings_file': 'corpus_embeddings.npy', 'doi_map_file': 'corpus_doi_map.json'}, 'model': {'path': 'models/checkpoints/bi_encoder/Bi_RankNet_Random_neg_SameLR/best_model', 'base_name': 'allenai/scibert_scivocab_uncased', 'max_length': 512, 'batch_size': 256}, 'evaluation': {'k_values': [1, 5, 10, 50, 100, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 48000, 49000, 50000], 'result_file': 'evaluation_results_50q.json', 'use_faiss': True, 'gpu_search': False, 'save_candidates': False, 'candidates_file': 'candidates_for_reranking_50q.json', 'candidates_k': 50000, 'calc_full_rank': True, 'queries_per_dataset': 1}, '_wandb': {}}
+2025-11-26 02:38:08,619 INFO    MainThread:3330020 [wandb_init.py:init():888] starting backend
+2025-11-26 02:38:08,853 INFO    MainThread:3330020 [wandb_init.py:init():891] sending inform_init request
+2025-11-26 02:38:08,862 INFO    MainThread:3330020 [wandb_init.py:init():899] backend started and connected
+2025-11-26 02:38:08,866 INFO    MainThread:3330020 [wandb_init.py:init():969] updated telemetry
+2025-11-26 02:38:08,879 INFO    MainThread:3330020 [wandb_init.py:init():993] communicating run to backend with 90.0 second timeout
+2025-11-26 02:38:09,600 INFO    MainThread:3330020 [wandb_init.py:init():1040] starting run threads in backend
+2025-11-26 02:38:09,725 INFO    MainThread:3330020 [wandb_run.py:_console_start():2504] atexit reg
+2025-11-26 02:38:09,725 INFO    MainThread:3330020 [wandb_run.py:_redirect():2352] redirect: wrap_raw
+2025-11-26 02:38:09,725 INFO    MainThread:3330020 [wandb_run.py:_redirect():2421] Wrapping output streams.
+2025-11-26 02:38:09,725 INFO    MainThread:3330020 [wandb_run.py:_redirect():2444] Redirects installed.
+2025-11-26 02:38:09,726 INFO    MainThread:3330020 [wandb_init.py:init():1080] run started, returning control to user process
+2025-11-26 02:49:37,667 INFO    MainThread:3330020 [wandb_run.py:_finish():2270] finishing run ku6kaw-kyushu-university/s2orc-ranker/z5x4pr6k
+2025-11-26 02:49:37,667 INFO    MainThread:3330020 [wandb_run.py:_atexit_cleanup():2469] got exitcode: 0
+2025-11-26 02:49:37,668 INFO    MainThread:3330020 [wandb_run.py:_restore():2451] restore
+2025-11-26 02:49:37,669 INFO    MainThread:3330020 [wandb_run.py:_restore():2457] restore done
+2025-11-26 02:49:40,002 INFO    MainThread:3330020 [wandb_run.py:_footer_sync_info():3853] logging synced files

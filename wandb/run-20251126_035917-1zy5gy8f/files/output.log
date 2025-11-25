@@ -1,0 +1,74 @@
+Loading DOI map from data/processed/embeddings/Bi_Contrastive_noHead/corpus_doi_map.json...
+Loading embeddings (mmap) from data/processed/embeddings/Bi_Contrastive_noHead/corpus_embeddings.npy...
+Building Faiss Index for candidate retrieval...
+Indexing: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 233/233 [00:33<00:00,  6.91it/s]
+Loading query encoder: models/checkpoints/bi_encoder/Bi_Contrastive_noHead/best_model
+Some weights of SiameseBiEncoder were not initialized from the model checkpoint at models/checkpoints/bi_encoder/Bi_Contrastive_noHead/best_model and are newly initialized: ['classifier_head.0.bias', 'classifier_head.0.weight', 'classifier_head.2.bias', 'classifier_head.2.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading queries from data/processed/evaluation_dataset_rich.jsonl...
+Sampling 1 query(s) per dataset...
+Reduced queries from 312 to 50.
+Loaded 50 queries for evaluation.
+Evaluating: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [12:12<00:00, 14.64s/it]
+
+=== Evaluation Results (Retriever) ===
+MRR: 0.0000
+Recall@1: 0.0000
+Recall@5: 0.0000
+Recall@10: 0.0000
+Recall@50: 0.0000
+Recall@100: 0.0000
+Recall@300: 0.0000
+Recall@500: 0.0000
+Recall@1000: 0.0000
+Recall@2000: 0.0000
+Recall@3000: 0.0000
+Recall@4000: 0.0000
+Recall@5000: 0.0000
+Recall@6000: 0.0000
+Recall@7000: 0.0200
+Recall@8000: 0.0200
+Recall@9000: 0.0200
+Recall@10000: 0.0400
+Recall@11000: 0.0400
+Recall@12000: 0.0400
+Recall@13000: 0.0400
+Recall@14000: 0.0400
+Recall@15000: 0.0400
+Recall@16000: 0.0400
+Recall@17000: 0.0400
+Recall@18000: 0.0400
+Recall@19000: 0.0600
+Recall@20000: 0.0600
+Recall@21000: 0.0600
+Recall@22000: 0.0600
+Recall@23000: 0.0600
+Recall@24000: 0.0600
+Recall@25000: 0.0600
+Recall@26000: 0.0600
+Recall@27000: 0.0600
+Recall@28000: 0.0600
+Recall@29000: 0.0600
+Recall@30000: 0.0600
+Recall@31000: 0.0600
+Recall@32000: 0.0600
+Recall@33000: 0.0600
+Recall@34000: 0.0600
+Recall@35000: 0.0600
+Recall@36000: 0.0600
+Recall@37000: 0.0800
+Recall@38000: 0.0800
+Recall@39000: 0.0800
+Recall@40000: 0.0800
+Recall@41000: 0.0800
+Recall@42000: 0.0800
+Recall@43000: 0.0800
+Recall@44000: 0.1000
+Recall@45000: 0.1000
+Recall@46000: 0.1000
+Recall@47000: 0.1000
+Recall@48000: 0.1000
+Recall@49000: 0.1000
+Recall@50000: 0.1000

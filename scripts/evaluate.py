@@ -18,7 +18,6 @@ from src.modeling.bi_encoder import SiameseBiEncoder
 from src.utils.cleaning import clean_text
 from src.utils.metrics import calculate_recall_at_k, calculate_mrr
 
-# --- 1. サンプリング機能付きロード関数 ---
 def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
     """作成済みの評価用JSONLファイルを読み込み、必要ならサンプリングする"""
     print(f"Loading queries from {jsonl_path}...")
@@ -42,9 +41,8 @@ def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
     # サンプリング処理
     if queries_per_dataset and queries_per_dataset > 0:
         print(f"Sampling {queries_per_dataset} query(s) per dataset...")
-        random.seed(seed) # 再現性のためシード固定
+        random.seed(seed) 
         
-        # グルーピング
         grouped = {}
         for q in all_queries:
             src = q["data_paper_doi"]
@@ -65,27 +63,26 @@ def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
 
     return all_queries
 
-# --- 2. 全件ランク計算関数 ---
 def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch_size=100000):
+    """全件スキャンを行い、正解の正確な順位を計算する"""
     num_docs = corpus_embeddings.shape[0]
     
-    gt_vecs = torch.tensor(corpus_embeddings[gt_indices], device=device) # (Num_GT, Dim)
-    q_vec_t = torch.tensor(query_vec, device=device).unsqueeze(1)        # (Dim, 1)
+    gt_vecs = torch.tensor(corpus_embeddings[gt_indices], device=device) 
+    q_vec_t = torch.tensor(query_vec, device=device).unsqueeze(1)
     
-    gt_scores = torch.matmul(gt_vecs, q_vec_t).squeeze(1) # (Num_GT,)
+    gt_scores = torch.matmul(gt_vecs, q_vec_t).squeeze(1)
     
     ranks = torch.ones(len(gt_indices), dtype=torch.long, device=device)
     
     for i in range(0, num_docs, batch_size):
         end = min(i + batch_size, num_docs)
         batch_vecs = torch.tensor(corpus_embeddings[i:end], device=device)
-        batch_scores = torch.matmul(batch_vecs, q_vec_t).squeeze(1) # (Batch,)
+        batch_scores = torch.matmul(batch_vecs, q_vec_t).squeeze(1)
         better_counts = (batch_scores.unsqueeze(0) > gt_scores.unsqueeze(1)).sum(dim=1)
         ranks += better_counts
         
     return ranks.cpu().numpy().tolist()
 
-# --- 3. メイン処理 ---
 @hydra.main(config_path="../configs", config_name="evaluate", version_base=None)
 def main(cfg: DictConfig):
     print("=== Starting Evaluation ===")
@@ -121,7 +118,6 @@ def main(cfg: DictConfig):
         shape=(num_vectors, hidden_size)
     )
     
-    # Faissインデックス構築
     index = None
     if cfg.evaluation.use_faiss:
         print("Building Faiss Index for candidate retrieval...")
@@ -139,7 +135,6 @@ def main(cfg: DictConfig):
             faiss.normalize_L2(batch_vecs)
             index.add(batch_vecs)
 
-    # モデルロード
     print(f"Loading query encoder: {cfg.model.path}")
     try:
         config = AutoConfig.from_pretrained(cfg.model.path)
@@ -151,7 +146,6 @@ def main(cfg: DictConfig):
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.base_name)
 
-    # --- クエリロード (サンプリング対応) ---
     queries_per_dataset = cfg.evaluation.get("queries_per_dataset", None)
     queries = load_queries_from_jsonl(cfg.data.eval_jsonl_file, queries_per_dataset, seed=cfg.seed)
     print(f"Loaded {len(queries)} queries for evaluation.")
@@ -180,7 +174,6 @@ def main(cfg: DictConfig):
             out = model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'], output_vectors=True)
             q_vec = out.logits.cpu().numpy().flatten()
         
-        # A. Faiss検索
         faiss_q_vec = q_vec.reshape(1, -1).copy()
         faiss.normalize_L2(faiss_q_vec)
         
@@ -190,7 +183,6 @@ def main(cfg: DictConfig):
             found_indices = I[0]
             found_dois = [doi_list[idx] for idx in found_indices if idx >= 0 and idx < len(doi_list)]
         
-        # B. ランク特定
         ground_truth_dois = q_data["ground_truth_dois"]
         gt_indices = [doi_to_index[doi] for doi in ground_truth_dois if doi in doi_to_index]
         
@@ -246,8 +238,16 @@ def main(cfg: DictConfig):
         print(f"Recall@{k}: {score:.4f}")
     
     out_file = os.path.join(cfg.data.output_dir, cfg.evaluation.result_file)
+    
+    # ▼▼▼ 修正: details も含めて保存 ▼▼▼
+    output_data = {
+        "mrr": mrr, 
+        "recall": recall_scores,
+        "details": candidates_list # ここに追加
+    }
     with open(out_file, 'w') as f:
-        json.dump({"mrr": mrr, "recall": recall_scores}, f, indent=2)
+        json.dump(output_data, f, indent=2)
+    # ▲▲▲ ----------------------------- ▲▲▲
         
     if cfg.evaluation.get("save_candidates", False):
         cand_file = os.path.join(cfg.data.output_dir, cfg.evaluation.candidates_file)
@@ -264,6 +264,7 @@ def main(cfg: DictConfig):
         safe_table_data = []
         for row in wandb_table_data:
             safe_table_data.append([str(x) for x in row])
+        
         table = wandb.Table(data=safe_table_data, columns=columns)
         wandb.log({"retrieval_details": table})
         wandb.finish()
