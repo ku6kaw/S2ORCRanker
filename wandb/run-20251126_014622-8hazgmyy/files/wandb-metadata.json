@@ -1,0 +1,49 @@
+{
+  "os": "Linux-6.8.0-60-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.10.12",
+  "startedAt": "2025-11-25T16:46:22.266697Z",
+  "args": [
+    "model.path=models/checkpoints/bi_encoder/20251123_042811/best_model",
+    "data.output_dir=data/processed/embeddings/Bi_RankNet_HardNeg_v2_FixLR",
+    "logging.run_name=eval_Bi_RankNet_HardNeg_v2_FixLR_50q",
+    "evaluation.save_candidates=false",
+    "evaluation.calc_full_rank=true",
+    "evaluation.gpu_search=false",
+    "evaluation.queries_per_dataset=1"
+  ],
+  "program": "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py",
+  "codePath": "scripts/evaluate.py",
+  "codePathLocal": "scripts/evaluate.py",
+  "git": {
+    "remote": "https://github.com/ku6kaw/S2ORCRanker",
+    "commit": "7c5d63e5a93669a8bed0e1f5785a4c9b6c560aec"
+  },
+  "email": "reoreo01.123@gmail.com",
+  "root": "/home/kurokawa/Projects/S2ORCRanker",
+  "host": "lssgpu",
+  "executable": "/usr/bin/python",
+  "cpu_count": 24,
+  "cpu_count_logical": 32,
+  "gpu": "NVIDIA RTX A6000",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "982820896768",
+      "used": "846140960768"
+    }
+  },
+  "memory": {
+    "total": "67242205184"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA RTX A6000",
+      "memoryTotal": "51527024640",
+      "cudaCores": 10752,
+      "architecture": "Ampere",
+      "uuid": "GPU-b6e6e0e3-0979-08d4-7b26-7ebfb7c03ea4"
+    }
+  ],
+  "cudaVersion": "12.6",
+  "writerId": "mw1dti5xvchc9l526duucx13pn8dr3xp"
+}

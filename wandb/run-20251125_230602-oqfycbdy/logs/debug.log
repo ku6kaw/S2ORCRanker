@@ -19,3 +19,8 @@ config: {'debug': False, 'seed': 42, 'logging': {'use_wandb': True, 'project_nam
 2025-11-25 23:06:03,444 INFO    MainThread:3098270 [wandb_run.py:_redirect():2421] Wrapping output streams.
 2025-11-25 23:06:03,444 INFO    MainThread:3098270 [wandb_run.py:_redirect():2444] Redirects installed.
 2025-11-25 23:06:03,445 INFO    MainThread:3098270 [wandb_init.py:init():1080] run started, returning control to user process
+2025-11-26 00:16:09,226 INFO    MainThread:3098270 [wandb_run.py:_finish():2270] finishing run ku6kaw-kyushu-university/s2orc-ranker/oqfycbdy
+2025-11-26 00:16:09,228 INFO    MainThread:3098270 [wandb_run.py:_atexit_cleanup():2469] got exitcode: 0
+2025-11-26 00:16:09,228 INFO    MainThread:3098270 [wandb_run.py:_restore():2451] restore
+2025-11-26 00:16:09,228 INFO    MainThread:3098270 [wandb_run.py:_restore():2457] restore done
+2025-11-26 00:16:11,621 INFO    MainThread:3098270 [wandb_run.py:_footer_sync_info():3853] logging synced files

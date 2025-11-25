@@ -1,0 +1,14 @@
+Loading DOI map from data/processed/embeddings/Bi_RankNet_Random_neg_SameLR/corpus_doi_map.json...
+Loading embeddings (mmap) from data/processed/embeddings/Bi_RankNet_Random_neg_SameLR/corpus_embeddings.npy...
+Building Faiss Index for candidate retrieval...
+Indexing: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 233/233 [00:30<00:00,  7.63it/s]
+Loading query encoder: models/checkpoints/bi_encoder/Bi_RankNet_Random_neg_SameLR/best_model
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/Bi_RankNet_Random_neg_SameLR/best_model', 'data.output_dir=data/processed/embeddings/Bi_RankNet_Random_neg_SameLR', 'logging.run_name=eval_Bi_RankNet_Random_neg_SameLR', 'evaluation.save_candidates=true', 'evaluation.candidates_k=100000', 'evaluation.calc_full_rank=true', 'evaluation.gpu_search=false', 'evaluation.queries_per_dataset=1']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 210, in main
+    queries = load_queries_from_jsonl(cfg.data.eval_jsonl_file, queries_per_dataset, seed=cfg.seed)
+TypeError: load_queries_from_jsonl() got an unexpected keyword argument 'seed'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
