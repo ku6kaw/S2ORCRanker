@@ -71,3 +71,54 @@ class MarginRankingTrainer(Trainer):
         loss = self.loss_fct(score_pos, score_neg, target)
 
         return (loss, outputs) if return_outputs else loss
+    
+class MultipleNegativesRankingTrainer(Trainer):
+    """
+    Bi-Encoder用: Multiple Negatives Ranking Loss (MNRL)
+    (Anchor, Positive, HardNegative) の3つを受け取り、
+    バッチ内全ての他サンプル + HardNegative を負例として学習する。
+    """
+    def __init__(self, *args, scale=20.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scale = scale # 類似度をスケーリングする値 (Temperatureの逆数)
+        self.cross_entropy = nn.CrossEntropyLoss()
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        if "labels" in inputs:
+            inputs.pop("labels")
+        
+        outputs = model(**inputs)
+        
+        # SiameseBiEncoderは head_type="none" の場合、(vec_a, vec_b, vec_c) を返す想定
+        # vec_c (Negative) がない場合は (vec_a, vec_b)
+        if isinstance(outputs.logits, tuple) and len(outputs.logits) == 3:
+            vec_a, vec_p, vec_n = outputs.logits
+            has_hard_neg = True
+        else:
+            vec_a, vec_p = outputs.logits
+            has_hard_neg = False
+
+        # 1. AnchorとPositive/Negativeの類似度行列を計算
+        # (Batch, Dim) @ (Dim, Batch) -> (Batch, Batch)
+        # scores_p[i][j] = Anchor[i] と Positive[j] の類似度
+        scores_p = torch.matmul(vec_a, vec_p.transpose(0, 1)) * self.scale
+        
+        if has_hard_neg:
+            # scores_n[i][j] = Anchor[i] と HardNegative[j] の類似度
+            scores_n = torch.matmul(vec_a, vec_n.transpose(0, 1)) * self.scale
+            
+            # 結合: [Positives (Batch), HardNegatives (Batch)]
+            # 横方向に結合 -> (Batch, Batch * 2)
+            scores = torch.cat([scores_p, scores_n], dim=1)
+        else:
+            scores = scores_p
+
+        # 2. 正解ラベルの作成
+        # i番目のAnchorの正解は、i番目のPositive (つまり対角成分)
+        # ラベルは [0, 1, 2, ..., batch_size-1]
+        labels = torch.arange(scores.size(0), device=scores.device)
+        
+        # 3. Cross Entropy Loss
+        loss = self.cross_entropy(scores, labels)
+
+        return (loss, outputs) if return_outputs else loss

@@ -114,6 +114,7 @@ class TextRankingDataset:
     def _get_tokenize_function(self):
         max_len = self.config.model.max_length
         
+        # Case 1: Cross-Encoder (Triplet) -> 変更なし
         if self.config.model.type == "cross_encoder":
             def tokenize_triplet(examples):
                 tokenized_pos = self.tokenizer(
@@ -132,7 +133,37 @@ class TextRankingDataset:
                 }
             return tokenize_triplet
 
-        else: # bi_encoder
+        # Case 2: Bi-Encoder (Triplet for MNRL) ★新規追加
+        elif self.config.data.format == "triplet":
+            def tokenize_bi_triplet(examples):
+                # Anchor
+                tokenized_a = self.tokenizer(
+                    examples["anchor"], padding="max_length", truncation=True, max_length=max_len
+                )
+                # Positive
+                tokenized_p = self.tokenizer(
+                    examples["positive"], padding="max_length", truncation=True, max_length=max_len
+                )
+                # Negative
+                tokenized_n = self.tokenizer(
+                    examples["negative"], padding="max_length", truncation=True, max_length=max_len
+                )
+                return {
+                    "input_ids": tokenized_a["input_ids"],
+                    "attention_mask": tokenized_a["attention_mask"],
+                    # Positiveを b として扱う
+                    "input_ids_b": tokenized_p["input_ids"],
+                    "attention_mask_b": tokenized_p["attention_mask"],
+                    # Negativeを c として扱う
+                    "input_ids_c": tokenized_n["input_ids"],
+                    "attention_mask_c": tokenized_n["attention_mask"],
+                    # MNRLではLabel列は不要だが、Trainerの仕様上残しておく
+                    "labels": [0] * len(examples["anchor"]) 
+                }
+            return tokenize_bi_triplet
+
+        # Case 3: Bi-Encoder (Pair) -> 変更なし
+        else: 
             def tokenize_pair(examples):
                 tokenized_a = self.tokenizer(
                     examples["abstract_a"], padding="max_length", truncation=True, max_length=max_len

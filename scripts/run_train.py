@@ -17,7 +17,7 @@ sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
 from src.modeling.cross_encoder import CrossEncoderMarginModel
 from src.training.dataset import TextRankingDataset
-from src.training.trainer import BiEncoderPairTrainer, MarginRankingTrainer, ContrastiveTrainer
+from src.training.trainer import BiEncoderPairTrainer, MarginRankingTrainer, ContrastiveTrainer, MultipleNegativesRankingTrainer
 
 def create_optimizer_grouped_parameters(model, base_lr, head_lr, weight_decay):
     """
@@ -115,6 +115,39 @@ def compute_metrics(eval_pred):
         'recall': recall
     }
 
+
+    """
+    Contrastive Loss (距離学習) 用の評価指標計算。
+    距離が threshold 以下なら「類似（Positive）」と判定する。
+    """
+    # ContrastiveTrainerは (vec_a, vec_b) を返すので、これを受け取る必要があるが、
+    # Hugging Face Trainerの compute_metrics は (predictions, label_ids) を受け取る仕様。
+    # predictions は logits のタプルになるはず。
+    
+    logits, labels = eval_pred
+    # logits は (vec_a, vec_b) のタプル
+    vec_a = torch.tensor(logits[0])
+    vec_b = torch.tensor(logits[1])
+    
+    # 距離計算 (Euclidean)
+    distances = torch.nn.functional.pairwise_distance(vec_a, vec_b).numpy()
+    
+    # 予測: 距離が閾値以下なら 1 (Positive), それ以外は 0 (Negative)
+    # ※ Contrastiveでは「距離が近いほど似ている」ため
+    preds = (distances < threshold).astype(int)
+    labels = labels.astype(int).reshape(-1)
+
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary', zero_division=0)
+    acc = accuracy_score(labels, preds)
+    
+    return {
+        'accuracy': acc,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
+        'mean_distance': float(distances.mean()) # 平均距離もログに残すと便利
+    }
+    
 @hydra.main(config_path="../configs", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     print(f"=== Starting Training: {cfg.model.type} ===")
@@ -145,27 +178,32 @@ def main(cfg: DictConfig):
         trainer_cls = MarginRankingTrainer
         
     else: # bi_encoder
-        # 設定からhead_typeを取得 (デフォルトはranknet)
         head_type = cfg.model.get("head_type", "ranknet")
-        print(f"Bi-Encoder Head Type: {head_type}")
+        # ★追加: 損失関数のタイプ設定 (デフォルトは互換性のため pair_score)
+        loss_type = cfg.training.get("loss_type", "pair_score")
         
-        # モデル初期化時に head_type を渡す
+        print(f"Bi-Encoder Head: {head_type}, Loss: {loss_type}")
+        
         model = SiameseBiEncoder.from_pretrained(
             cfg.model.name, 
             config=model_config, 
             head_type=head_type
         )
         
-        if head_type == "none":
-            # ヘッドなし -> 距離学習 (ContrastiveTrainer)
+        if loss_type == "mnrl":
+            # Multiple Negatives Ranking Loss
+            print("Using MultipleNegativesRankingTrainer (Batch Negatives)")
+            trainer_cls = MultipleNegativesRankingTrainer
+        
+        elif head_type == "none":
+            # Contrastive
             print("Using ContrastiveTrainer (Distance-based)")
             trainer_cls = ContrastiveTrainer
-            # Contrastiveの場合、BCE用のmetrics計算は適用できないためNoneのままにする
         else:
-            # ヘッドあり -> 分類学習 (BiEncoderPairTrainer)
+            # RankNet / BCE
             print("Using BiEncoderPairTrainer (Classification Head)")
             trainer_cls = BiEncoderPairTrainer
-            compute_metrics_func = compute_metrics # 以前定義した関数
+            compute_metrics_func = compute_metrics
 
     # 4. オプティマイザ作成
     base_lr = cfg.training.learning_rate

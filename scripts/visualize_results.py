@@ -16,7 +16,8 @@ TARGET_RUNS = [
     "eval_Baseline_PretrainedSciBERT",
     "eval_Siamese_Contrastive",
     "eval_Bi_RankNet_HardNeg_v1_FullRank",
-    "eval_Bi_RankNet_HardNeg_v2_FixLR"
+    "eval_Bi_RankNet_HardNeg_v2_FixLR",
+    "eval_Bi_Contrastive_noHead"
 ]
 
 # グラフの表示名（凡例）のマッピング
@@ -24,7 +25,8 @@ LEGEND_NAMES = {
     "eval_Baseline_PretrainedSciBERT": "SciBERT (Baseline)",
     "eval_Siamese_Contrastive": "SciBERT (Contrastive Loss)",
     "eval_Bi_RankNet_HardNeg_v1_FullRank": "SciBERT (RankNet Loss, Miss LR)",
-    "eval_Bi_RankNet_HardNeg_v2_FixLR": "SciBERT (RankNet Loss, Fixed LR)"
+    "eval_Bi_RankNet_HardNeg_v2_FixLR": "SciBERT (RankNet Loss, Fixed LR)",
+    "eval_Bi_Contrastive_noHead": "SciBERT (Contrastive Loss, No Head)"
 }
 
 def get_recall_data():
