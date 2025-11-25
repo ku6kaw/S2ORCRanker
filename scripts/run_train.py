@@ -249,17 +249,26 @@ def main(cfg: DictConfig):
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=cfg.training.patience))
         
     # 6. Trainer初期化
-    trainer = trainer_cls(
-        model=model,
-        args=args,
-        train_dataset=tokenized_datasets["train"],
-        eval_dataset=tokenized_datasets["validation"],
-        tokenizer=tokenizer,
-        margin=cfg.training.margin,
-        optimizers=(optimizer, None),
-        compute_metrics=compute_metrics_func,
-        callbacks=callbacks
-    )
+    # 共通の引数
+    trainer_kwargs = {
+        "model": model,
+        "args": args,
+        "train_dataset": tokenized_datasets["train"],
+        "eval_dataset": tokenized_datasets["validation"],
+        "tokenizer": tokenizer,
+        "optimizers": (optimizer, None),
+        "compute_metrics": compute_metrics_func,
+        "callbacks": callbacks
+    }
+
+    # Trainerクラスに応じた追加引数
+    if trainer_cls == MultipleNegativesRankingTrainer:
+        trainer_kwargs["scale"] = cfg.training.get("scale", 20.0)
+    elif trainer_cls in [ContrastiveTrainer, MarginRankingTrainer]:
+        trainer_kwargs["margin"] = cfg.training.margin
+    
+    # Trainer初期化
+    trainer = trainer_cls(**trainer_kwargs)
     
     print("Starting training...")
     trainer.train()
