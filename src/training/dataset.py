@@ -28,6 +28,16 @@ class TextRankingDataset:
 
         df = df.dropna(subset=['abstract_a', 'abstract_b', 'label'])
         df['label'] = df['label'].astype(int)
+        
+        loss_type = self.config.training.get("loss_type", "pair_score")
+        if loss_type == "mnrl":
+            print("ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)")
+            original_len = len(df)
+            df = df[df['label'] == 1]
+            print(f"   Rows filtered: {original_len} -> {len(df)}")
+            
+            if len(df) == 0:
+                raise ValueError("No positive samples found! MNRL requires positive pairs.")
 
         # --- データ形式の変換 (必要に応じて) ---
         if self.config.data.format == "triplet":

@@ -27,7 +27,8 @@ data:
 model:
   # type: "bi_encoder" or "cross_encoder"
   type: "bi_encoder"
-  name: "allenai/scibert_scivocab_uncased"
+  # name: "allenai/scibert_scivocab_uncased"
+  name: "allenai/specter2_base"
   max_length: 512
   # Bi-Encoder用: "none" or "ranknet"
   head_type: "ranknet"
@@ -43,7 +44,8 @@ training:
   weight_decay: 0.01
   margin: 1.0 # LossのMargin
   patience: 3
-  loss_type: "pair_score"
+  # loss_type: "pair_score"
+  loss_type: "mnrl"
   
   # ログ・保存設定
   logging_steps: 10
