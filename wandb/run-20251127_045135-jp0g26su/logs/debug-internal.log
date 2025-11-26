@@ -1,0 +1,12 @@
+{"time":"2025-11-27T04:51:35.438512461+09:00","level":"INFO","msg":"stream: starting","core version":"0.23.0"}
+{"time":"2025-11-27T04:51:35.84684158+09:00","level":"INFO","msg":"stream: created new stream","id":"jp0g26su"}
+{"time":"2025-11-27T04:51:35.846954866+09:00","level":"INFO","msg":"handler: started","stream_id":"jp0g26su"}
+{"time":"2025-11-27T04:51:35.847081962+09:00","level":"INFO","msg":"stream: started","id":"jp0g26su"}
+{"time":"2025-11-27T04:51:35.847101438+09:00","level":"INFO","msg":"writer: started","stream_id":"jp0g26su"}
+{"time":"2025-11-27T04:51:35.847137068+09:00","level":"INFO","msg":"sender: started","stream_id":"jp0g26su"}
+{"time":"2025-11-27T04:52:34.37386736+09:00","level":"INFO","msg":"stream: closing","id":"jp0g26su"}
+{"time":"2025-11-27T04:52:35.399295661+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-11-27T04:53:06.728147736+09:00","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/ku6kaw-kyushu-university/s2orc-ranker/jp0g26su/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2025-11-27T04:53:09.918139052+09:00","level":"INFO","msg":"handler: closed","stream_id":"jp0g26su"}
+{"time":"2025-11-27T04:53:09.918301092+09:00","level":"INFO","msg":"sender: closed","stream_id":"jp0g26su"}
+{"time":"2025-11-27T04:53:09.918313527+09:00","level":"INFO","msg":"stream: closed","id":"jp0g26su"}

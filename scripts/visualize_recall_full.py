@@ -15,7 +15,8 @@ MODEL_DIRS = {
     "RankNet v2 (Fixed LR)": "data/processed/embeddings/Bi_RankNet_HardNeg_v2_FixLR",
     "RankNet (Random Neg)": "data/processed/embeddings/Bi_RankNet_Random_neg_SameLR",
     "Contrastive (No Head)": "data/processed/embeddings/Bi_Contrastive_noHead",
-    "Pretrained SPECTER2": "data/processed/embeddings/Pretrained_SPECTER2"
+    "Pretrained SPECTER2": "data/processed/embeddings/Pretrained_SPECTER2",
+    "SPECTER2 Fine-tuned": "data/processed/embeddings/SPECTER2_MNRL",
 }
 
 def try_load_json(path):

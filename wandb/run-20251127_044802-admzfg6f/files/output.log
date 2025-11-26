@@ -1,0 +1,16 @@
+Loading DOI map from data/processed/embeddings/SPECTER2_MNRL/corpus_doi_map.json...
+Loading embeddings (mmap) from data/processed/embeddings/SPECTER2_MNRL/corpus_embeddings.npy...
+Building Faiss Index for candidate retrieval...
+Indexing:  67%|█████████████████████████████████████████████████████████████████████████████████████████████████▋                                               | 157/233 [00:53<00:26,  2.91it/s]
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_RandomNeg/best_model', 'model.base_name=allenai/specter2_base', 'data.output_dir=data/processed/embeddings/SPECTER2_MNRL', 'logging.run_name=eval_Bi_SPECTER2_MNRL_RandomNeg_50q', 'evaluation.result_file=evaluation_results.json', 'evaluation.candidates_file=candidates_for_reranking.json']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 136, in main
+    index.add(batch_vecs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/faiss/__init__.py", line 215, in replacement_add
+    self.add_c(n, swig_ptr(x))
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/faiss/swigfaiss.py", line 9091, in add
+    return _swigfaiss.GpuIndexFlat_add(self, arg2, x)
+RuntimeError: Error in virtual void* faiss::gpu::StandardGpuResourcesImpl::allocMemory(const faiss::gpu::AllocRequest&) at /project/faiss/faiss/gpu/StandardGpuResources.cpp:452: Error: 'err == cudaSuccess' failed: StandardGpuResources: alloc fail type FlatData dev 0 space Device stream 0x5b1954684f30 size 24268800000 bytes (cudaMalloc error out of memory [2])
+
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

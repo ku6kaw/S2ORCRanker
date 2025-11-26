@@ -1,0 +1,8 @@
+Loading DOI map from data/processed/embeddings/SPECTER2_MNRL/corpus_doi_map.json...
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_RandomNeg/best_model', 'model.base_name=allenai/specter2_base', 'data.output_dir=data/processed/embeddings/SPECTER2_MNRL', 'logging.run_name=eval_Bi_SPECTER2_MNRL_RandomNeg_50q', 'evaluation.result_file=evaluation_results.json', 'evaluation.candidates_file=candidates_for_reranking.json']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 105, in main
+    with open(doi_map_path, 'r') as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'data/processed/embeddings/SPECTER2_MNRL/corpus_doi_map.json'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
