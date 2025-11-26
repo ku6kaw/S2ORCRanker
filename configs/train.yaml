@@ -43,6 +43,7 @@ training:
   weight_decay: 0.01
   margin: 1.0 # LossのMargin
   patience: 3
+  loss_type: "pair_score"
   
   # ログ・保存設定
   logging_steps: 10
