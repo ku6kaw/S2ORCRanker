@@ -1,0 +1,36 @@
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)
+   Rows filtered: 34624 -> 7013
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5511, Validation set: 1502
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5511/5511 [00:01<00:00, 3264.95 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1502/1502 [00:00<00:00, 2632.43 examples/s]
+Loading model: allenai/specter2_base
+Bi-Encoder Head: none, Loss: mnrl
+🔄 Loading Adapter: allenai/specter2
+[2025-11-27 07:02:36,813][adapters.utils][INFO] - Attempting to load adapter from HF Model Hub...
+Fetching 4 files: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 15363.75it/s]
+[2025-11-27 07:02:37,012][adapters.loading][INFO] - Loading module configuration from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/adapter_config.json
+[2025-11-27 07:02:37,015][adapters.configuration.model_adapters_config][INFO] - Adding adapter '[PRX]'.
+[2025-11-27 07:02:37,033][adapters.model_mixin][WARNING] - There are adapters available but none are activated for the forward pass.
+[2025-11-27 07:02:37,037][adapters.loading][INFO] - Loading module weights from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/pytorch_adapter.bin
+✅ Adapter '[PRX]' activated.
+Using MultipleNegativesRankingTrainer (Batch Negatives)
+Early stopping enabled with patience: 3
+/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py:82: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `MultipleNegativesRankingTrainer.__init__`. Use `processing_class` instead.
+  super().__init__(*args, **kwargs)
+Starting training...
+  0%|                                                                                                                                                                     | 0/519 [00:00<?, ?it/s]Error executing job with overrides: ['logging.run_name=Bi_SPECTER2_MNRL_AdapterInit_Full', 'model.name=allenai/specter2_base', 'model.head_type=none', 'model.adapter_name=allenai/specter2', 'model.freeze_base=false', 'training.loss_type=mnrl', 'training.learning_rate=2e-5', 'data.train_file=data/processed/training_dataset_abstract_cleaned_v3.csv']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 305, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3736, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+TypeError: MultipleNegativesRankingTrainer.compute_loss() got an unexpected keyword argument 'num_items_in_batch'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

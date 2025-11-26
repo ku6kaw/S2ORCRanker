@@ -32,6 +32,8 @@ model:
   max_length: 512
   # Bi-Encoder用: "none" or "ranknet"
   head_type: "ranknet"
+  adapter_name: null
+  freeze_base: false
 
 # 学習設定
 training:

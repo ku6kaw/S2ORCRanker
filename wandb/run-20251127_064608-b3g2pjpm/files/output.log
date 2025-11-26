@@ -1,0 +1,24 @@
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)
+   Rows filtered: 34624 -> 7013
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5511, Validation set: 1502
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5511/5511 [00:01<00:00, 3048.31 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1502/1502 [00:00<00:00, 2577.12 examples/s]
+Loading model: allenai/specter2_base
+/home/kurokawa/.local/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Bi-Encoder Head: ranknet, Loss: mnrl
+Some weights of SiameseBiEncoder were not initialized from the model checkpoint at allenai/specter2_base and are newly initialized: ['classifier_head.0.bias', 'classifier_head.0.weight', 'classifier_head.2.bias', 'classifier_head.2.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+🔄 Loading Adapter: allenai/specter2
+Error executing job with overrides: ['logging.run_name=Bi_SPECTER2_MNRL_AdapterInit_Full', 'model.name=allenai/specter2_base', 'model.adapter_name=allenai/specter2', 'model.freeze_base=false', 'training.loss_type=mnrl', 'training.learning_rate=2e-5', 'data.train_file=data/processed/training_dataset_abstract_cleaned_v3.csv']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 198, in main
+    model.bert.load_adapter(adapter_name, source="hf", set_active=True)
+TypeError: PeftAdapterMixin.load_adapter() got an unexpected keyword argument 'source'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

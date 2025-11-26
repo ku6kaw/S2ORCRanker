@@ -1,0 +1,28 @@
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)
+   Rows filtered: 34624 -> 7013
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5511, Validation set: 1502
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5511/5511 [00:01<00:00, 3098.52 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1502/1502 [00:00<00:00, 2703.21 examples/s]
+Loading model: allenai/specter2_base
+Bi-Encoder Head: none, Loss: mnrl
+🔄 Loading Adapter: allenai/specter2
+[2025-11-27 06:59:52,771][adapters.utils][INFO] - Attempting to load adapter from HF Model Hub...
+README.md: 9.77kB [00:00, 57.5MB/s]                                                                                                                                         | 0/4 [00:00<?, ?it/s]
+.gitattributes: 1.48kB [00:00, 13.2MB/s]                                                                                                                              | 0.00/3.59M [00:00<?, ?B/s]
+pytorch_adapter.bin: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3.59M/3.59M [00:02<00:00, 1.44MB/s]
+Fetching 4 files: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:02<00:00,  1.37it/s]
+[2025-11-27 06:59:55,896][adapters.loading][INFO] - Loading module configuration from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/adapter_config.json
+[2025-11-27 06:59:55,897][adapters.configuration.model_adapters_config][INFO] - Adding adapter '[PRX]'.
+[2025-11-27 06:59:55,903][adapters.model_mixin][WARNING] - There are adapters available but none are activated for the forward pass.
+[2025-11-27 06:59:55,906][adapters.loading][INFO] - Loading module weights from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/pytorch_adapter.bin
+Using MultipleNegativesRankingTrainer (Batch Negatives)
+Error executing job with overrides: ['logging.run_name=Bi_SPECTER2_MNRL_AdapterInit_Full', 'model.name=allenai/specter2_base', 'model.head_type=none', 'model.adapter_name=allenai/specter2', 'model.freeze_base=false', 'training.loss_type=mnrl', 'training.learning_rate=2e-5', 'data.train_file=data/processed/training_dataset_abstract_cleaned_v3.csv']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 246, in main
+    args = TrainingArguments(
+TypeError: TrainingArguments.__init__() got an unexpected keyword argument 'evaluation_strategy'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

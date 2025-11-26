@@ -10,6 +10,7 @@ from torch.optim import AdamW
 import wandb
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+import adapters
 
 # プロジェクトルートをパスに追加
 sys.path.append(os.getcwd())
@@ -190,6 +191,36 @@ def main(cfg: DictConfig):
             head_type=head_type
         )
         
+        adapter_name = cfg.model.get("adapter_name", None)
+        if adapter_name:
+            print(f"🔄 Loading Adapter: {adapter_name}")
+            
+            # adaptersライブラリで初期化
+            adapters.init(model.bert)
+            
+            # アダプターをロードし、その内部名(例: '[PRX]')を取得
+            loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
+            
+            # 念のため明示的にアクティブ化
+            model.bert.set_active_adapters(loaded_name)
+            print(f"✅ Adapter '{loaded_name}' activated.")
+            
+            if cfg.model.get("freeze_base", False):
+                print("❄️  Freezing base model parameters (Training Adapter only)")
+                # 全パラメータを一旦凍結
+                for param in model.bert.parameters():
+                    param.requires_grad = False
+                
+                # アダプター部分と分類ヘッド(もしあれば)のみ解凍
+                for name, param in model.named_parameters():
+                    if "adapter" in name or "classifier_head" in name:
+                        param.requires_grad = True
+                        
+                # 確認: 学習対象パラメータ数
+                trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+                all_params = sum(p.numel() for p in model.parameters())
+                print(f"   Trainable params: {trainable_params:,} / {all_params:,} ({100 * trainable_params / all_params:.2f}%)")
+        
         if loss_type == "mnrl":
             # Multiple Negatives Ranking Loss
             print("Using MultipleNegativesRankingTrainer (Batch Negatives)")
@@ -229,7 +260,7 @@ def main(cfg: DictConfig):
         warmup_ratio=cfg.training.warmup_ratio,
         logging_strategy="steps",
         logging_steps=cfg.training.logging_steps,
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         eval_steps=cfg.training.eval_steps,
         save_strategy="steps",
         save_steps=cfg.training.save_steps,

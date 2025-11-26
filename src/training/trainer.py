@@ -14,7 +14,7 @@ class ContrastiveTrainer(Trainer):
         super().__init__(*args, **kwargs)
         self.margin = margin
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.pop("labels")
         outputs = model(**inputs)
         
@@ -37,7 +37,7 @@ class BiEncoderPairTrainer(Trainer):
     Bi-Encoder用: 分類ヘッドあり (RankNet/BCE) を使用するTrainer。
     モデル出力 score を期待する。
     """
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.pop("labels")
         outputs = model(**inputs)
         
@@ -59,7 +59,7 @@ class MarginRankingTrainer(Trainer):
         self.margin = margin
         self.loss_fct = nn.MarginRankingLoss(margin=self.margin)
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         if "labels" in inputs:
             inputs.pop("labels")
             
@@ -83,7 +83,7 @@ class MultipleNegativesRankingTrainer(Trainer):
         self.scale = scale # 類似度をスケーリングする値 (Temperatureの逆数)
         self.cross_entropy = nn.CrossEntropyLoss()
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         if "labels" in inputs:
             inputs.pop("labels")
         
