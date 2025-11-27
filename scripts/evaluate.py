@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 from transformers import AutoTokenizer, AutoConfig
 import wandb
 import random
+import adapters
 
 sys.path.append(os.getcwd())
 from src.modeling.bi_encoder import SiameseBiEncoder
@@ -142,6 +143,18 @@ def main(cfg: DictConfig):
     except:
         model = SiameseBiEncoder.from_pretrained(cfg.model.base_name)
         
+    adapter_name = cfg.model.get("adapter_name", None)
+    if adapter_name:
+        print(f"🔄 Loading Adapter config: {adapter_name}")
+        adapters.init(model.bert)
+        try:
+            print(f"   Attempting to load adapter from checkpoint: {cfg.model.path}")
+            loaded_name = model.bert.load_adapter(cfg.model.path, set_active=True)
+        except Exception as e:
+            print(f"   Checkpoint load failed ({e}), falling back to Hub: {adapter_name}")
+            loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
+        model.bert.set_active_adapters(loaded_name)
+        print(f"✅ Adapter '{loaded_name}' activated.")
     model.to(device)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.base_name)

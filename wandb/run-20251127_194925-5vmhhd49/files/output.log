@@ -1,0 +1,88 @@
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)
+   Rows filtered: 34624 -> 7013
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5511, Validation set: 1502
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5511/5511 [00:01<00:00, 3253.91 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1502/1502 [00:00<00:00, 2681.71 examples/s]
+Loading model: allenai/specter2_base
+Bi-Encoder Head: none, Loss: mnrl
+🔄 Loading Adapter: allenai/specter2
+[2025-11-27 19:49:29,881][adapters.utils][INFO] - Attempting to load adapter from HF Model Hub...
+Fetching 4 files: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 71089.90it/s]
+[2025-11-27 19:49:30,076][adapters.loading][INFO] - Loading module configuration from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/adapter_config.json
+[2025-11-27 19:49:30,077][adapters.configuration.model_adapters_config][INFO] - Adding adapter '[PRX]'.
+[2025-11-27 19:49:30,083][adapters.model_mixin][WARNING] - There are adapters available but none are activated for the forward pass.
+[2025-11-27 19:49:30,086][adapters.loading][INFO] - Loading module weights from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/pytorch_adapter.bin
+✅ Adapter '[PRX]' activated.
+Using MultipleNegativesRankingTrainer (Batch Negatives)
+Early stopping enabled with patience: 3
+/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py:82: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `MultipleNegativesRankingTrainer.__init__`. Use `processing_class` instead.
+  super().__init__(*args, **kwargs)
+Starting training...
+                                                                                                                                                                                                  
+{'loss': 130.7849, 'grad_norm': 2410.245361328125, 'learning_rate': 3.4615384615384617e-06, 'epoch': 0.06}
+{'loss': 82.8929, 'grad_norm': 1353.4898681640625, 'learning_rate': 7.307692307692308e-06, 'epoch': 0.12}
+{'loss': 41.2763, 'grad_norm': 770.4578247070312, 'learning_rate': 1.1153846153846154e-05, 'epoch': 0.17}
+{'loss': 29.3271, 'grad_norm': 3388.712158203125, 'learning_rate': 1.5000000000000002e-05, 'epoch': 0.23}
+{'loss': 19.8137, 'grad_norm': 1040.5233154296875, 'learning_rate': 1.8846153846153846e-05, 'epoch': 0.29}
+                                                                                                                                                                                                  
+{'eval_loss': 11.126243591308594, 'eval_runtime': 21.1719, 'eval_samples_per_second': 70.943, 'eval_steps_per_second': 2.22, 'epoch': 0.29}
+{'loss': 18.5457, 'grad_norm': 1092.870361328125, 'learning_rate': 1.9700214132762314e-05, 'epoch': 0.35}
+{'loss': 14.7357, 'grad_norm': 538.5278930664062, 'learning_rate': 1.9271948608137044e-05, 'epoch': 0.4}
+{'loss': 12.4612, 'grad_norm': 376.659912109375, 'learning_rate': 1.8843683083511778e-05, 'epoch': 0.46}
+{'loss': 10.7298, 'grad_norm': 387.9775390625, 'learning_rate': 1.841541755888651e-05, 'epoch': 0.52}
+{'loss': 11.0678, 'grad_norm': 689.3895263671875, 'learning_rate': 1.7987152034261244e-05, 'epoch': 0.58}
+{'eval_loss': 5.87064266204834, 'eval_runtime': 21.3461, 'eval_samples_per_second': 70.364, 'eval_steps_per_second': 2.202, 'epoch': 0.58}
+{'loss': 9.4453, 'grad_norm': 538.5231323242188, 'learning_rate': 1.7558886509635974e-05, 'epoch': 0.64}
+{'loss': 8.988, 'grad_norm': 372.5721740722656, 'learning_rate': 1.7130620985010707e-05, 'epoch': 0.69}
+{'loss': 8.3758, 'grad_norm': 291.2356872558594, 'learning_rate': 1.670235546038544e-05, 'epoch': 0.75}
+{'loss': 8.16, 'grad_norm': 286.8072509765625, 'learning_rate': 1.6274089935760174e-05, 'epoch': 0.81}
+{'loss': 7.7599, 'grad_norm': 211.5526123046875, 'learning_rate': 1.5845824411134904e-05, 'epoch': 0.87}
+{'eval_loss': 4.992802143096924, 'eval_runtime': 21.4042, 'eval_samples_per_second': 70.173, 'eval_steps_per_second': 2.196, 'epoch': 0.87}
+{'loss': 6.9875, 'grad_norm': 219.00584411621094, 'learning_rate': 1.5417558886509637e-05, 'epoch': 0.92}
+{'loss': 6.8334, 'grad_norm': 335.3216552734375, 'learning_rate': 1.4989293361884369e-05, 'epoch': 0.98}
+{'loss': 6.3165, 'grad_norm': 413.4741516113281, 'learning_rate': 1.45610278372591e-05, 'epoch': 1.04}
+{'loss': 6.4029, 'grad_norm': 421.79351806640625, 'learning_rate': 1.4132762312633834e-05, 'epoch': 1.1}
+{'loss': 5.8428, 'grad_norm': 405.8627014160156, 'learning_rate': 1.3704496788008566e-05, 'epoch': 1.16}
+{'eval_loss': 4.630826950073242, 'eval_runtime': 21.4017, 'eval_samples_per_second': 70.181, 'eval_steps_per_second': 2.196, 'epoch': 1.16}
+{'loss': 5.8802, 'grad_norm': 373.8346862792969, 'learning_rate': 1.3276231263383299e-05, 'epoch': 1.21}
+{'loss': 4.9555, 'grad_norm': 332.0249938964844, 'learning_rate': 1.284796573875803e-05, 'epoch': 1.27}
+{'loss': 5.1958, 'grad_norm': 136.66236877441406, 'learning_rate': 1.2419700214132764e-05, 'epoch': 1.33}
+{'loss': 4.8324, 'grad_norm': 164.78955078125, 'learning_rate': 1.1991434689507496e-05, 'epoch': 1.39}
+{'loss': 4.4932, 'grad_norm': 167.70166015625, 'learning_rate': 1.1563169164882229e-05, 'epoch': 1.45}
+{'eval_loss': 4.357995986938477, 'eval_runtime': 21.401, 'eval_samples_per_second': 70.184, 'eval_steps_per_second': 2.196, 'epoch': 1.45}
+{'loss': 4.41, 'grad_norm': 129.17539978027344, 'learning_rate': 1.113490364025696e-05, 'epoch': 1.5}
+{'loss': 4.2719, 'grad_norm': 238.66017150878906, 'learning_rate': 1.0706638115631694e-05, 'epoch': 1.56}
+{'loss': 4.3911, 'grad_norm': 148.31883239746094, 'learning_rate': 1.0278372591006426e-05, 'epoch': 1.62}
+{'loss': 4.348, 'grad_norm': 186.9208526611328, 'learning_rate': 9.850107066381157e-06, 'epoch': 1.68}
+{'loss': 4.2266, 'grad_norm': 274.1247253417969, 'learning_rate': 9.421841541755889e-06, 'epoch': 1.73}
+{'eval_loss': 3.967721462249756, 'eval_runtime': 21.3911, 'eval_samples_per_second': 70.216, 'eval_steps_per_second': 2.197, 'epoch': 1.73}
+{'loss': 3.9295, 'grad_norm': 233.41220092773438, 'learning_rate': 8.993576017130622e-06, 'epoch': 1.79}
+{'loss': 3.9244, 'grad_norm': 142.861328125, 'learning_rate': 8.565310492505354e-06, 'epoch': 1.85}
+{'loss': 4.005, 'grad_norm': 186.25502014160156, 'learning_rate': 8.137044967880087e-06, 'epoch': 1.91}
+{'loss': 3.2691, 'grad_norm': 151.1553497314453, 'learning_rate': 7.708779443254819e-06, 'epoch': 1.97}
+{'loss': 3.5333, 'grad_norm': 107.44391632080078, 'learning_rate': 7.28051391862955e-06, 'epoch': 2.02}
+{'eval_loss': 3.8298866748809814, 'eval_runtime': 21.3944, 'eval_samples_per_second': 70.205, 'eval_steps_per_second': 2.197, 'epoch': 2.02}
+{'loss': 3.5798, 'grad_norm': 127.79692840576172, 'learning_rate': 6.852248394004283e-06, 'epoch': 2.08}
+{'loss': 3.4078, 'grad_norm': 165.53128051757812, 'learning_rate': 6.423982869379015e-06, 'epoch': 2.14}
+{'loss': 3.5291, 'grad_norm': 104.0401382446289, 'learning_rate': 5.995717344753748e-06, 'epoch': 2.2}
+{'loss': 3.265, 'grad_norm': 134.35910034179688, 'learning_rate': 5.56745182012848e-06, 'epoch': 2.25}
+{'loss': 3.3361, 'grad_norm': 95.55210876464844, 'learning_rate': 5.139186295503213e-06, 'epoch': 2.31}
+{'eval_loss': 3.8204495906829834, 'eval_runtime': 21.3984, 'eval_samples_per_second': 70.192, 'eval_steps_per_second': 2.196, 'epoch': 2.31}
+{'loss': 3.2798, 'grad_norm': 93.74979400634766, 'learning_rate': 4.710920770877944e-06, 'epoch': 2.37}
+{'loss': 3.2481, 'grad_norm': 94.8495864868164, 'learning_rate': 4.282655246252677e-06, 'epoch': 2.43}
+{'loss': 3.1951, 'grad_norm': 115.95092010498047, 'learning_rate': 3.854389721627409e-06, 'epoch': 2.49}
+{'loss': 3.1596, 'grad_norm': 92.76889038085938, 'learning_rate': 3.4261241970021414e-06, 'epoch': 2.54}
+{'loss': 3.0053, 'grad_norm': 99.08653259277344, 'learning_rate': 2.997858672376874e-06, 'epoch': 2.6}
+{'eval_loss': 3.8172476291656494, 'eval_runtime': 21.3919, 'eval_samples_per_second': 70.213, 'eval_steps_per_second': 2.197, 'epoch': 2.6}
+{'loss': 3.3279, 'grad_norm': 177.8986053466797, 'learning_rate': 2.5695931477516064e-06, 'epoch': 2.66}
+{'loss': 3.1837, 'grad_norm': 260.2292175292969, 'learning_rate': 2.1413276231263384e-06, 'epoch': 2.72}
+{'loss': 2.9883, 'grad_norm': 117.70685577392578, 'learning_rate': 1.7130620985010707e-06, 'epoch': 2.77}
+{'loss': 3.1393, 'grad_norm': 92.91075134277344, 'learning_rate': 1.2847965738758032e-06, 'epoch': 2.83}
+{'loss': 2.9886, 'grad_norm': 99.77257537841797, 'learning_rate': 8.565310492505354e-07, 'epoch': 2.89}
+{'eval_loss': 3.7712268829345703, 'eval_runtime': 21.3991, 'eval_samples_per_second': 70.19, 'eval_steps_per_second': 2.196, 'epoch': 2.89}
+{'loss': 2.9267, 'grad_norm': 87.91665649414062, 'learning_rate': 4.282655246252677e-07, 'epoch': 2.95}
+{'train_runtime': 902.7236, 'train_samples_per_second': 18.315, 'train_steps_per_second': 0.575, 'train_loss': 10.911779756490894, 'epoch': 3.0}
+Saving best model to /home/kurokawa/Projects/S2ORCRanker/models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_AdapterInit_Full/best_model
