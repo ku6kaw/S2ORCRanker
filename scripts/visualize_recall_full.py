@@ -17,6 +17,7 @@ MODEL_DIRS = {
     "Contrastive (No Head)": "data/processed/embeddings/Bi_Contrastive_noHead",
     "Pretrained SPECTER2": "data/processed/embeddings/Pretrained_SPECTER2",
     "SPECTER2 Fine-tuned": "data/processed/embeddings/SPECTER2_MNRL",
+    "SPECTER2 Adapter": "data/processed/embeddings/SPECTER2_Adapter",
 }
 
 def try_load_json(path):
