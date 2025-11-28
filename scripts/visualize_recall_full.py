@@ -18,6 +18,7 @@ MODEL_DIRS = {
     "Pretrained SPECTER2": "data/processed/embeddings/Pretrained_SPECTER2",
     "SPECTER2 Fine-tuned": "data/processed/embeddings/SPECTER2_MNRL",
     "SPECTER2 Adapter": "data/processed/embeddings/SPECTER2_Adapter",
+    "SPECTER2 Hard Neg": "data/processed/embeddings/SPECTER2_HardNeg"
 }
 
 def try_load_json(path):

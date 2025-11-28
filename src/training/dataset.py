@@ -1,3 +1,5 @@
+# src/training/dataset.py
+
 import pandas as pd
 import numpy as np
 import torch
@@ -28,21 +30,31 @@ class TextRankingDataset:
 
         df = df.dropna(subset=['abstract_a', 'abstract_b', 'label'])
         df['label'] = df['label'].astype(int)
-        
+
+        # ▼▼▼ 修正箇所: Triplet形式でない場合のみ、MNRL用に正例フィルタリングを行う ▼▼▼
         loss_type = self.config.training.get("loss_type", "pair_score")
-        if loss_type == "mnrl":
-            print("ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)")
+        data_format = self.config.data.get("format", "pair")
+
+        # MNRLかつ、Hard Negativeを使わない(pair形式の)場合のみフィルタリング
+        if loss_type == "mnrl" and data_format != "triplet":
+            print(f"\n[Dataset] ℹ️  Filtering dataset for MNRL (format={data_format})")
+            print("          Keeping only Positive samples (label=1) for In-Batch Negatives")
             original_len = len(df)
             df = df[df['label'] == 1]
-            print(f"   Rows filtered: {original_len} -> {len(df)}")
+            print(f"          Rows filtered: {original_len} -> {len(df)}")
             
             if len(df) == 0:
                 raise ValueError("No positive samples found! MNRL requires positive pairs.")
+        # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         # --- データ形式の変換 (必要に応じて) ---
         if self.config.data.format == "triplet":
             print("Converting dataset to Triplets (Anchor, Positive, Negative)...")
             df = self._convert_to_triplets(df)
+            
+            # Triplet変換後にデータが残っているか確認
+            if len(df) == 0:
+                raise ValueError("Triplet conversion resulted in empty dataset! Check if Hard Negatives (label=0) exist in input file.")
         
         # --- データ分割 (GroupShuffleSplit) ---
         print("Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...")
@@ -82,10 +94,8 @@ class TextRankingDataset:
         # --- トークナイズ ---
         print("Tokenizing...")
         
-        # ▼▼▼ 修正点: remove_columns に渡す値を list() で明示的に変換 ▼▼▼
         cols_to_remove = list(df.columns)
         
-        # Dataset.from_pandas でインデックス列が追加されている場合があるので安全のため削除リストに追加
         if "__index_level_0__" in raw_datasets['train'].column_names:
             cols_to_remove.append("__index_level_0__")
 
@@ -93,16 +103,22 @@ class TextRankingDataset:
             self._get_tokenize_function(),
             batched=True,
             num_proc=self.config.data.num_proc,
-            remove_columns=cols_to_remove # list(df.columns)
+            remove_columns=cols_to_remove
         )
         tokenized_datasets.set_format("torch")
         
         return tokenized_datasets
 
     def _convert_to_triplets(self, df):
+        # label列がある前提
         pos_df = df[df['label'] == 1]
         neg_df = df[df['label'] == 0]
         
+        # 負例がない場合はエラーにするか警告を出す
+        if len(neg_df) == 0:
+            print("⚠️ Warning: No negatives found for Triplet conversion. Returning empty DataFrame.")
+            return pd.DataFrame()
+
         neg_map = neg_df.groupby('abstract_a')['abstract_b'].apply(list).to_dict()
         
         triplets = []
@@ -112,6 +128,7 @@ class TextRankingDataset:
             
             hard_negatives = neg_map.get(anchor, [])
             if hard_negatives:
+                # 負例の中からランダムに1つ選んで Triplet を作る
                 negative = np.random.choice(hard_negatives)
                 triplets.append({
                     'anchor': anchor,
@@ -124,7 +141,7 @@ class TextRankingDataset:
     def _get_tokenize_function(self):
         max_len = self.config.model.max_length
         
-        # Case 1: Cross-Encoder (Triplet) -> 変更なし
+        # Case 1: Cross-Encoder (Triplet)
         if self.config.model.type == "cross_encoder":
             def tokenize_triplet(examples):
                 tokenized_pos = self.tokenizer(
@@ -143,7 +160,7 @@ class TextRankingDataset:
                 }
             return tokenize_triplet
 
-        # Case 2: Bi-Encoder (Triplet for MNRL) ★新規追加
+        # Case 2: Bi-Encoder (Triplet for MNRL with Hard Negatives)
         elif self.config.data.format == "triplet":
             def tokenize_bi_triplet(examples):
                 # Anchor
@@ -161,18 +178,16 @@ class TextRankingDataset:
                 return {
                     "input_ids": tokenized_a["input_ids"],
                     "attention_mask": tokenized_a["attention_mask"],
-                    # Positiveを b として扱う
                     "input_ids_b": tokenized_p["input_ids"],
                     "attention_mask_b": tokenized_p["attention_mask"],
-                    # Negativeを c として扱う
                     "input_ids_c": tokenized_n["input_ids"],
                     "attention_mask_c": tokenized_n["attention_mask"],
-                    # MNRLではLabel列は不要だが、Trainerの仕様上残しておく
+                    # MNRLのラベルはTrainer内で自動生成されるためダミーを入れる
                     "labels": [0] * len(examples["anchor"]) 
                 }
             return tokenize_bi_triplet
 
-        # Case 3: Bi-Encoder (Pair) -> 変更なし
+        # Case 3: Bi-Encoder (Pair)
         else: 
             def tokenize_pair(examples):
                 tokenized_a = self.tokenizer(

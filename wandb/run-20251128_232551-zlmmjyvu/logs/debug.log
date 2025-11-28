@@ -1,0 +1,23 @@
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_setup.py:_flush():80] Current SDK version is 0.23.0
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_setup.py:_flush():80] Configure stats pid to 3546883
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/.config/wandb/settings
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/Projects/S2ORCRanker/wandb/settings
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_init.py:setup_run_log_directory():713] Logging user logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251128_232551-zlmmjyvu/logs/debug.log
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_init.py:setup_run_log_directory():714] Logging internal logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251128_232551-zlmmjyvu/logs/debug-internal.log
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_init.py:init():840] calling init triggers
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_init.py:init():845] wandb.init called with sweep_config: {}
+config: {'debug': False, 'seed': 42, 'logging': {'use_wandb': True, 'project_name': 's2orc-ranker', 'run_name': 'Bi_SPECTER2_MNRL_HardNeg', 'tags': []}, 'data': {'train_file': 'data/processed/training_dataset_hard_negatives_specter2.csv', 'val_size': 0.2, 'num_proc': 4, 'format': 'triplet'}, 'model': {'type': 'bi_encoder', 'name': 'allenai/specter2_base', 'max_length': 512, 'head_type': 'none', 'adapter_name': 'allenai/specter2', 'freeze_base': False}, 'training': {'output_dir': '/home/kurokawa/Projects/S2ORCRanker/models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_HardNeg', 'batch_size': 16, 'epochs': 3, 'learning_rate': 2e-05, 'head_learning_rate': 2e-05, 'warmup_ratio': 0.1, 'weight_decay': 0.01, 'margin': 1.0, 'patience': 3, 'loss_type': 'mnrl', 'logging_steps': 10, 'eval_steps': 50, 'save_steps': 50, 'save_total_limit': 2}, '_wandb': {}}
+2025-11-28 23:25:51,342 INFO    MainThread:3546883 [wandb_init.py:init():888] starting backend
+2025-11-28 23:25:51,569 INFO    MainThread:3546883 [wandb_init.py:init():891] sending inform_init request
+2025-11-28 23:25:51,578 INFO    MainThread:3546883 [wandb_init.py:init():899] backend started and connected
+2025-11-28 23:25:51,582 INFO    MainThread:3546883 [wandb_init.py:init():969] updated telemetry
+2025-11-28 23:25:51,592 INFO    MainThread:3546883 [wandb_init.py:init():993] communicating run to backend with 90.0 second timeout
+2025-11-28 23:25:52,262 INFO    MainThread:3546883 [wandb_init.py:init():1040] starting run threads in backend
+2025-11-28 23:25:52,346 INFO    MainThread:3546883 [wandb_run.py:_console_start():2504] atexit reg
+2025-11-28 23:25:52,346 INFO    MainThread:3546883 [wandb_run.py:_redirect():2352] redirect: wrap_raw
+2025-11-28 23:25:52,346 INFO    MainThread:3546883 [wandb_run.py:_redirect():2421] Wrapping output streams.
+2025-11-28 23:25:52,346 INFO    MainThread:3546883 [wandb_run.py:_redirect():2444] Redirects installed.
+2025-11-28 23:25:52,347 INFO    MainThread:3546883 [wandb_init.py:init():1080] run started, returning control to user process
+2025-11-28 23:25:52,907 INFO    wandb-AsyncioManager-main:3546883 [service_client.py:_forward_responses():80] Reached EOF.
+2025-11-28 23:25:52,907 INFO    wandb-AsyncioManager-main:3546883 [mailbox.py:close():137] Closing mailbox, abandoning 1 handles.

@@ -11,27 +11,76 @@ import faiss
 import json
 import sqlite3
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoConfig
+import adapters # Adapter対応
 
 # srcへのパスを通す
 sys.path.append(os.getcwd())
 from src.utils.cleaning import clean_text
+# モデルクラスもインポート（ロードロジック共通化のため）
+from src.modeling.bi_encoder import SiameseBiEncoder
 
 def load_resources(cfg, device):
-    """モデルとFaissインデックスをロード"""
-    print(f"Loading model: {cfg.mining.model_name}")
-    tokenizer = AutoTokenizer.from_pretrained(cfg.mining.model_name)
-    model = AutoModel.from_pretrained(cfg.mining.model_name).to(device)
-    model.eval()
+    """モデルとFaissインデックスをロード (Adapter対応版)"""
+    
+    # --- 1. モデルのロード (encode_corpus.pyと同様のロジック) ---
+    print(f"Loading model config from: {cfg.mining.model_name}")
+    # ベースモデル名の決定 (設定になければ SPECTER2 base と仮定)
+    base_model_name = "allenai/specter2_base"
+    
+    try:
+        config = AutoConfig.from_pretrained(cfg.mining.model_name)
+    except:
+        config = AutoConfig.from_pretrained(base_model_name)
 
+    # 構造の初期化
+    model = SiameseBiEncoder.from_pretrained(base_model_name, config=config)
+    
+    # Adapter構造の初期化
+    adapter_name = cfg.mining.get("adapter_name", None)
+    if adapter_name:
+        print(f"🔄 Initializing Adapter structure: {adapter_name}")
+        adapters.init(model.bert)
+        loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
+        model.bert.set_active_adapters(loaded_name)
+        print(f"   Adapter '{loaded_name}' structure initialized.")
+
+    # 重みのロード
+    print(f"📂 Loading trained state_dict from: {cfg.mining.model_name}")
+    state_dict_path = os.path.join(cfg.mining.model_name, "pytorch_model.bin")
+    if not os.path.exists(state_dict_path):
+        state_dict_path = os.path.join(cfg.mining.model_name, "model.safetensors")
+        from safetensors.torch import load_file
+        state_dict = load_file(state_dict_path)
+    else:
+        state_dict = torch.load(state_dict_path, map_location="cpu")
+    
+    keys = model.load_state_dict(state_dict, strict=False)
+    print(f"   Missing keys: {len(keys.missing_keys)}")
+    
+    model.to(device)
+    model.eval()
+    
+    tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+
+    # --- 2. Faissインデックスのロード ---
     print(f"Loading Faiss index: {cfg.data.faiss_index_file}")
     index = faiss.read_index(cfg.data.faiss_index_file)
     
+    # --- 3. DOIマップのロード (リスト対応修正) ---
     print(f"Loading DOI map: {cfg.data.doi_map_file}")
     with open(cfg.data.doi_map_file, 'r') as f:
-        doi_map = json.load(f)
-    # ID -> DOI の逆引き辞書を作成
-    id_to_doi = {v: k for k, v in doi_map.items()}
+        doi_data = json.load(f)
+    
+    # リストの場合 (encode_corpus.pyの出力) と 辞書の場合 を分岐処理
+    if isinstance(doi_data, list):
+        # リストのインデックスがそのままIDになる
+        print(f"   DOI map is a list of {len(doi_data)} items.")
+        id_to_doi = {i: doi for i, doi in enumerate(doi_data)}
+    else:
+        # 辞書 {doi: id} の場合 -> 逆引き {id: doi} に変換
+        print(f"   DOI map is a dict of {len(doi_data)} items.")
+        id_to_doi = {v: k for k, v in doi_data.items()}
     
     return tokenizer, model, index, id_to_doi
 
@@ -39,11 +88,8 @@ def get_abstracts_from_db(dois, db_path):
     """SQLiteからDOIに対応するアブストラクトを一括取得"""
     doi_to_text = {}
     
-    # DB接続
     with sqlite3.connect(db_path) as conn:
-        chunk_size = 900 # SQLiteのプレースホルダー上限対策
-        
-        # 必要なDOIのみをユニーク化してリスト化
+        chunk_size = 900 
         unique_dois = list(set(dois))
         
         for i in tqdm(range(0, len(unique_dois), chunk_size), desc="Querying DB"):
@@ -62,7 +108,7 @@ def get_abstracts_from_db(dois, db_path):
 
 @hydra.main(config_path="../configs", config_name="mining", version_base=None)
 def main(cfg: DictConfig):
-    print("=== Starting Hard Negative Mining ===")
+    print("=== Starting Hard Negative Mining (Fixed) ===")
     print(OmegaConf.to_yaml(cfg))
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -84,7 +130,7 @@ def main(cfg: DictConfig):
     # 2. リソースのロード
     tokenizer, model, index, id_to_doi = load_resources(cfg, device)
 
-    # 3. 検索実行 (Hard Negative候補のIDを取得)
+    # 3. 検索実行
     anchor_to_candidates = {}
     batch_size = cfg.mining.batch_size
     
@@ -92,30 +138,31 @@ def main(cfg: DictConfig):
     for i in tqdm(range(0, len(unique_anchors), batch_size), desc="Mining"):
         batch_anchors = unique_anchors[i : i + batch_size]
         
-        # ベクトル化
         inputs = tokenizer(
             batch_anchors, padding=True, truncation=True, 
             max_length=cfg.mining.max_length, return_tensors="pt"
         ).to(device)
         
         with torch.no_grad():
-            outputs = model(**inputs)
-            # CLSトークン or Mean Pooling (SciBERTは通常CLSでOKだが、ここではPoolerOutputを使用)
-            embeddings = outputs.pooler_output.cpu().numpy().astype(np.float32)
+            # SiameseBiEncoderを使うため、pooler_outputではなくoutput_vectors=Trueの結果を使う
+            outputs = model(
+                input_ids=inputs['input_ids'], 
+                attention_mask=inputs['attention_mask'],
+                output_vectors=True
+            )
+            embeddings = outputs.logits.float().cpu().numpy()
         
         # Faiss検索
-        # 検索数は (NegRatio + 余裕分) ではなく、多めに取ってフィルタリングする
         distances, indices = index.search(embeddings, cfg.mining.search_top_k)
         
-        # 結果を格納
         for j, anchor_text in enumerate(batch_anchors):
             result_ids = indices[j]
+            # IDが有効範囲内かつマップに存在するか確認
             candidate_dois = [id_to_doi[rid] for rid in result_ids if rid != -1 and rid in id_to_doi]
             anchor_to_candidates[anchor_text] = candidate_dois
 
     # 4. テキスト取得
     print("Fetching texts for candidates...")
-    # 全候補DOIをリスト化
     all_candidate_dois = []
     for dois in anchor_to_candidates.values():
         all_candidate_dois.extend(dois)
@@ -123,7 +170,7 @@ def main(cfg: DictConfig):
     doi_to_text_map = get_abstracts_from_db(all_candidate_dois, cfg.data.db_path)
     print(f"Retrieved {len(doi_to_text_map):,} abstracts from DB.")
 
-    # 5. データセット構築 (フィルタリング & 結合)
+    # 5. データセット構築
     final_rows = []
     neg_ratio = cfg.mining.neg_ratio
     min_len = cfg.mining.min_text_length
@@ -135,7 +182,7 @@ def main(cfg: DictConfig):
         positive = row['abstract_b']
         data_paper_doi = row.get('data_paper_doi', None)
         
-        # 正例を追加
+        # 正例
         final_rows.append({
             'abstract_a': anchor,
             'abstract_b': positive,
@@ -143,7 +190,7 @@ def main(cfg: DictConfig):
             'data_paper_doi': data_paper_doi
         })
         
-        # 負例を追加
+        # 負例
         candidates = anchor_to_candidates.get(anchor, [])
         true_positives = anchor_to_positives.get(anchor, set())
         
@@ -156,13 +203,12 @@ def main(cfg: DictConfig):
             if not raw_text:
                 continue
                 
-            # クリーニング
             neg_text = clean_text(raw_text)
             
             # フィルタリング
             if len(neg_text) < min_len: continue
-            if neg_text == anchor: continue      # 自分自身
-            if neg_text in true_positives: continue # 正解(False Negative)回避
+            if neg_text == anchor: continue
+            if neg_text in true_positives: continue # False Negative回避
             
             final_rows.append({
                 'abstract_a': anchor,

@@ -1,0 +1,18 @@
+Loading dataset from: data/processed/training_dataset_hard_negatives_specter2.csv
+ℹ️  Filtering dataset for MNRL: Keeping only Positive samples (label=1)
+   Rows filtered: 28052 -> 7013
+Converting dataset to Triplets (Anchor, Positive, Negative)...
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Error executing job with overrides: ['logging.run_name=Bi_SPECTER2_MNRL_HardNeg', 'model.name=allenai/specter2_base', 'model.head_type=none', 'model.adapter_name=allenai/specter2', 'model.freeze_base=false', 'training.loss_type=mnrl', 'training.learning_rate=2e-5', 'training.batch_size=16', 'data.train_file=data/processed/training_dataset_hard_negatives_specter2.csv', 'data.format=triplet']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 167, in main
+    tokenized_datasets = dataset_handler.load_and_prepare()
+  File "/home/kurokawa/Projects/S2ORCRanker/src/training/dataset.py", line 51, in load_and_prepare
+    groups = df[group_col]
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/pandas/core/frame.py", line 4113, in __getitem__
+    indexer = self.columns.get_loc(key)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/pandas/core/indexes/range.py", line 417, in get_loc
+    raise KeyError(key)
+KeyError: 'anchor'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
