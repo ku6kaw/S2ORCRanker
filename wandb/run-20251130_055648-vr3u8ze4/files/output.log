@@ -1,0 +1,93 @@
+Loading dataset from: data/processed/training_dataset_hard_negatives_specter2.csv
+Converting dataset to Triplets (Anchor, Positive, Negative)...
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5511, Validation set: 1502
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5511/5511 [00:02<00:00, 2179.46 examples/s]
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1502/1502 [00:00<00:00, 1917.76 examples/s]
+Loading model: allenai/specter2_base
+Bi-Encoder Head: none, Loss: mnrl
+🔄 Loading Adapter: allenai/specter2
+[2025-11-30 05:56:55,351][adapters.utils][INFO] - Attempting to load adapter from HF Model Hub...
+Fetching 4 files: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 15377.83it/s]
+[2025-11-30 05:56:55,548][adapters.loading][INFO] - Loading module configuration from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/adapter_config.json
+[2025-11-30 05:56:55,552][adapters.configuration.model_adapters_config][INFO] - Adding adapter '[PRX]'.
+[2025-11-30 05:56:55,571][adapters.model_mixin][WARNING] - There are adapters available but none are activated for the forward pass.
+[2025-11-30 05:56:55,574][adapters.loading][INFO] - Loading module weights from /home/kurokawa/.cache/huggingface/hub/models--allenai--specter2/snapshots/2081559630a80fc5851d8f798a05ba81e9468089/pytorch_adapter.bin
+✅ Adapter '[PRX]' activated.
+Using MultipleNegativesRankingTrainer (Batch Negatives)
+Early stopping enabled with patience: 3
+/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py:82: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `MultipleNegativesRankingTrainer.__init__`. Use `processing_class` instead.
+  super().__init__(*args, **kwargs)
+Starting training...
+  3%|████▊                                                                                                                                                      | 32/1035 [00:21<11:07,  1.50it/s]Traceback (most recent call last):
+{'loss': 112.2002, 'grad_norm': 3073.1376953125, 'learning_rate': 1.7307692307692308e-06, 'epoch': 0.03}
+{'loss': 93.4506, 'grad_norm': 3373.117431640625, 'learning_rate': 3.653846153846154e-06, 'epoch': 0.06}
+{'loss': 63.8531, 'grad_norm': 1779.8487548828125, 'learning_rate': 5.576923076923077e-06, 'epoch': 0.09}
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 315, in <module>
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 305, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3782, in training_step
+    self.accelerator.backward(loss, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/accelerator.py", line 2852, in backward
+    loss.backward(**kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 315, in <module>
+    main()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 305, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3782, in training_step
+    self.accelerator.backward(loss, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/accelerate/accelerator.py", line 2852, in backward
+    loss.backward(**kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt

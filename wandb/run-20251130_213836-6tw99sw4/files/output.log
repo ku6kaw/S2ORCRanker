@@ -1,0 +1,11 @@
+Loading DOI map from data/processed/embeddings/SPECTER2_HardNeg_round2/corpus_doi_map.json...
+Loading embeddings (mmap) from data/processed/embeddings/SPECTER2_HardNeg_round2/corpus_embeddings.npy...
+Error executing job with overrides: ['model.path=models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_HardNeg_round2/best_model', 'model.base_name=allenai/specter2_base', '+model.adapter_name=allenai/specter2', 'data.output_dir=data/processed/embeddings/SPECTER2_HardNeg_round2', 'evaluation.result_file=evaluation_results.json', 'evaluation.candidates_file=candidates_for_reranking.json', 'evaluation.save_candidates=true']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/evaluate.py", line 115, in main
+    corpus_embeddings = np.memmap(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/numpy/core/memmap.py", line 268, in __new__
+    mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
+ValueError: mmap length is greater than file size
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

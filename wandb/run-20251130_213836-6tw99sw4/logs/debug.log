@@ -1,0 +1,23 @@
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_setup.py:_flush():80] Current SDK version is 0.23.0
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_setup.py:_flush():80] Configure stats pid to 2333748
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/.config/wandb/settings
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_setup.py:_flush():80] Loading settings from /home/kurokawa/Projects/S2ORCRanker/wandb/settings
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_init.py:setup_run_log_directory():713] Logging user logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251130_213836-6tw99sw4/logs/debug.log
+2025-11-30 21:38:36,739 INFO    MainThread:2333748 [wandb_init.py:setup_run_log_directory():714] Logging internal logs to /home/kurokawa/Projects/S2ORCRanker/wandb/run-20251130_213836-6tw99sw4/logs/debug-internal.log
+2025-11-30 21:38:36,740 INFO    MainThread:2333748 [wandb_init.py:init():840] calling init triggers
+2025-11-30 21:38:36,740 INFO    MainThread:2333748 [wandb_init.py:init():845] wandb.init called with sweep_config: {}
+config: {'debug': False, 'seed': 42, 'logging': {'use_wandb': True, 'project_name': 's2orc-ranker', 'run_name': 'eval_retriever_bi_encoder_50q', 'tags': ['evaluation', 'retriever', 'bi-encoder']}, 'data': {'db_path': 'data/processed/s2orc_filtered.db', 'eval_jsonl_file': 'data/processed/evaluation_dataset_rich.jsonl', 'output_dir': 'data/processed/embeddings/SPECTER2_HardNeg_round2', 'embeddings_file': 'corpus_embeddings.npy', 'doi_map_file': 'corpus_doi_map.json'}, 'model': {'path': 'models/checkpoints/bi_encoder/Bi_SPECTER2_MNRL_HardNeg_round2/best_model', 'base_name': 'allenai/specter2_base', 'max_length': 512, 'batch_size': 256, 'adapter_name': 'allenai/specter2'}, 'evaluation': {'k_values': [1, 5, 10, 50, 100, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 48000, 49000, 50000], 'result_file': 'evaluation_results.json', 'use_faiss': True, 'gpu_search': True, 'save_candidates': True, 'candidates_file': 'candidates_for_reranking.json', 'candidates_k': 50000, 'calc_full_rank': True, 'queries_per_dataset': 1}, '_wandb': {}}
+2025-11-30 21:38:36,740 INFO    MainThread:2333748 [wandb_init.py:init():888] starting backend
+2025-11-30 21:38:36,965 INFO    MainThread:2333748 [wandb_init.py:init():891] sending inform_init request
+2025-11-30 21:38:36,973 INFO    MainThread:2333748 [wandb_init.py:init():899] backend started and connected
+2025-11-30 21:38:36,978 INFO    MainThread:2333748 [wandb_init.py:init():969] updated telemetry
+2025-11-30 21:38:36,989 INFO    MainThread:2333748 [wandb_init.py:init():993] communicating run to backend with 90.0 second timeout
+2025-11-30 21:38:37,700 INFO    MainThread:2333748 [wandb_init.py:init():1040] starting run threads in backend
+2025-11-30 21:38:37,774 INFO    MainThread:2333748 [wandb_run.py:_console_start():2504] atexit reg
+2025-11-30 21:38:37,774 INFO    MainThread:2333748 [wandb_run.py:_redirect():2352] redirect: wrap_raw
+2025-11-30 21:38:37,774 INFO    MainThread:2333748 [wandb_run.py:_redirect():2421] Wrapping output streams.
+2025-11-30 21:38:37,774 INFO    MainThread:2333748 [wandb_run.py:_redirect():2444] Redirects installed.
+2025-11-30 21:38:37,775 INFO    MainThread:2333748 [wandb_init.py:init():1080] run started, returning control to user process
+2025-11-30 21:38:40,874 INFO    wandb-AsyncioManager-main:2333748 [service_client.py:_forward_responses():80] Reached EOF.
+2025-11-30 21:38:40,874 INFO    wandb-AsyncioManager-main:2333748 [mailbox.py:close():137] Closing mailbox, abandoning 1 handles.

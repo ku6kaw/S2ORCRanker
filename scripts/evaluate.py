@@ -20,9 +20,7 @@ from src.utils.cleaning import clean_text
 from src.utils.metrics import calculate_recall_at_k, calculate_mrr
 
 def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
-    """作成済みの評価用JSONLファイルを読み込み、必要ならサンプリングする"""
     print(f"Loading queries from {jsonl_path}...")
-    
     if not os.path.exists(jsonl_path):
         raise FileNotFoundError(f"Evaluation dataset not found: {jsonl_path}")
 
@@ -39,11 +37,9 @@ def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
                 "data_paper_doi": data.get("metadata", {}).get("source_datapaper", "unknown")
             })
     
-    # サンプリング処理
     if queries_per_dataset and queries_per_dataset > 0:
         print(f"Sampling {queries_per_dataset} query(s) per dataset...")
         random.seed(seed) 
-        
         grouped = {}
         for q in all_queries:
             src = q["data_paper_doi"]
@@ -58,26 +54,32 @@ def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
             else:
                 selected = group
             sampled_queries.extend(selected)
-            
         print(f"Reduced queries from {len(all_queries)} to {len(sampled_queries)}.")
         return sampled_queries
 
     return all_queries
 
 def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch_size=100000):
-    """全件スキャンを行い、正解の正確な順位を計算する"""
     num_docs = corpus_embeddings.shape[0]
-    
+    # float16のままだと精度が落ちる可能性があるため、計算時にfloat32へキャストしても良いが、
+    # GPUメモリ節約のためfloat16で計算し、必要ならtensor作成時にdtypeを指定する
+    # ここでは元のnumpy配列の型に従う
     gt_vecs = torch.tensor(corpus_embeddings[gt_indices], device=device) 
     q_vec_t = torch.tensor(query_vec, device=device).unsqueeze(1)
     
+    # 型を合わせる（q_vecがfloat32なら合わせる）
+    if gt_vecs.dtype != q_vec_t.dtype:
+        gt_vecs = gt_vecs.to(q_vec_t.dtype)
+
     gt_scores = torch.matmul(gt_vecs, q_vec_t).squeeze(1)
-    
     ranks = torch.ones(len(gt_indices), dtype=torch.long, device=device)
     
     for i in range(0, num_docs, batch_size):
         end = min(i + batch_size, num_docs)
         batch_vecs = torch.tensor(corpus_embeddings[i:end], device=device)
+        if batch_vecs.dtype != q_vec_t.dtype:
+            batch_vecs = batch_vecs.to(q_vec_t.dtype)
+            
         batch_scores = torch.matmul(batch_vecs, q_vec_t).squeeze(1)
         better_counts = (batch_scores.unsqueeze(0) > gt_scores.unsqueeze(1)).sum(dim=1)
         ranks += better_counts
@@ -86,7 +88,7 @@ def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch
 
 @hydra.main(config_path="../configs", config_name="evaluate", version_base=None)
 def main(cfg: DictConfig):
-    print("=== Starting Evaluation ===")
+    print("=== Starting Evaluation (float16 Support) ===")
     print(OmegaConf.to_yaml(cfg))
     
     if cfg.logging.use_wandb:
@@ -112,9 +114,10 @@ def main(cfg: DictConfig):
     print(f"Loading embeddings (mmap) from {embeddings_path}...")
     hidden_size = 768 
     
+    # ▼▼▼ 修正: float16 で読み込む ▼▼▼
     corpus_embeddings = np.memmap(
         embeddings_path, 
-        dtype='float32', 
+        dtype='float16',  # float32 -> float16
         mode='r', 
         shape=(num_vectors, hidden_size)
     )
@@ -122,6 +125,7 @@ def main(cfg: DictConfig):
     index = None
     if cfg.evaluation.use_faiss:
         print("Building Faiss Index for candidate retrieval...")
+        # Faissのインデックスは通常float32
         index = faiss.IndexFlatIP(hidden_size)
         if cfg.evaluation.gpu_search and torch.cuda.is_available():
             try:
@@ -132,7 +136,8 @@ def main(cfg: DictConfig):
         
         batch_size = 50000
         for i in tqdm(range(0, num_vectors, batch_size), desc="Indexing"):
-            batch_vecs = np.array(corpus_embeddings[i : i + batch_size])
+            # ▼▼▼ 修正: Faissに入れる前に float32 に変換 ▼▼▼
+            batch_vecs = np.array(corpus_embeddings[i : i + batch_size]).astype('float32')
             faiss.normalize_L2(batch_vecs)
             index.add(batch_vecs)
 
@@ -142,7 +147,7 @@ def main(cfg: DictConfig):
         model = SiameseBiEncoder.from_pretrained(cfg.model.path, config=config)
     except:
         model = SiameseBiEncoder.from_pretrained(cfg.model.base_name)
-        
+    
     adapter_name = cfg.model.get("adapter_name", None)
     if adapter_name:
         print(f"🔄 Loading Adapter config: {adapter_name}")
@@ -155,6 +160,7 @@ def main(cfg: DictConfig):
             loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
         model.bert.set_active_adapters(loaded_name)
         print(f"✅ Adapter '{loaded_name}' activated.")
+
     model.to(device)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.base_name)
@@ -174,7 +180,6 @@ def main(cfg: DictConfig):
     max_k = max(cfg.evaluation.k_values)
     save_k = cfg.evaluation.get("candidates_k", 1000)
     search_k = max(max_k, save_k) + 50
-    
     scan_batch_size = 500000 
 
     for q_data in tqdm(queries, desc="Evaluating"):
@@ -207,6 +212,7 @@ def main(cfg: DictConfig):
             continue
 
         if cfg.evaluation.get("calc_full_rank", False):
+            # 全件ランク計算
             all_gt_ranks = calculate_full_ranks(q_vec, gt_indices, corpus_embeddings, device, batch_size=scan_batch_size)
             all_gt_ranks.sort()
             first_hit_rank = all_gt_ranks[0]
@@ -218,6 +224,7 @@ def main(cfg: DictConfig):
                     all_gt_ranks.append(rank)
                     break
             if first_hit_rank == 0:
+                # 圏外
                 all_gt_ranks = [0] * len(ground_truth_dois)
 
         ranks.append(first_hit_rank)
@@ -252,15 +259,13 @@ def main(cfg: DictConfig):
     
     out_file = os.path.join(cfg.data.output_dir, cfg.evaluation.result_file)
     
-    # ▼▼▼ 修正: details も含めて保存 ▼▼▼
     output_data = {
         "mrr": mrr, 
         "recall": recall_scores,
-        "details": candidates_list # ここに追加
+        "details": candidates_list
     }
     with open(out_file, 'w') as f:
         json.dump(output_data, f, indent=2)
-    # ▲▲▲ ----------------------------- ▲▲▲
         
     if cfg.evaluation.get("save_candidates", False):
         cand_file = os.path.join(cfg.data.output_dir, cfg.evaluation.candidates_file)
