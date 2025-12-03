@@ -1,0 +1,43 @@
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+Converting dataset to Triplets (Anchor, Positive, Negative)...
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5840, Validation set: 1171
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5840/5840 [00:04<00:00, 1436.19 examples/s]
+Map (num_proc=4): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1171/1171 [00:01<00:00, 899.34 examples/s]
+Loading model: BAAI/bge-reranker-v2-m3
+Some weights of CrossEncoderMarginModel were not initialized from the model checkpoint at BAAI/bge-reranker-v2-m3 and are newly initialized: ['scorer.classifier.dense.bias', 'scorer.classifier.dense.weight', 'scorer.classifier.out_proj.bias', 'scorer.classifier.out_proj.weight', 'scorer.roberta.embeddings.LayerNorm.bias', 'scorer.roberta.embeddings.LayerNorm.weight', 'scorer.roberta.embeddings.position_embeddings.weight', 'scorer.roberta.embeddings.token_type_embeddings.weight', 'scorer.roberta.embeddings.word_embeddings.weight', 'scorer.roberta.encoder.layer.0.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.0.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.0.attention.output.dense.bias', 'scorer.roberta.encoder.layer.0.attention.output.dense.weight', 'scorer.roberta.encoder.layer.0.attention.self.key.bias', 'scorer.roberta.encoder.layer.0.attention.self.key.weight', 'scorer.roberta.encoder.layer.0.attention.self.query.bias', 'scorer.roberta.encoder.layer.0.attention.self.query.weight', 'scorer.roberta.encoder.layer.0.attention.self.value.bias', 'scorer.roberta.encoder.layer.0.attention.self.value.weight', 'scorer.roberta.encoder.layer.0.intermediate.dense.bias', 'scorer.roberta.encoder.layer.0.intermediate.dense.weight', 'scorer.roberta.encoder.layer.0.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.0.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.0.output.dense.bias', 'scorer.roberta.encoder.layer.0.output.dense.weight', 'scorer.roberta.encoder.layer.1.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.1.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.1.attention.output.dense.bias', 'scorer.roberta.encoder.layer.1.attention.output.dense.weight', 'scorer.roberta.encoder.layer.1.attention.self.key.bias', 'scorer.roberta.encoder.layer.1.attention.self.key.weight', 'scorer.roberta.encoder.layer.1.attention.self.query.bias', 'scorer.roberta.encoder.layer.1.attention.self.query.weight', 'scorer.roberta.encoder.layer.1.attention.self.value.bias', 'scorer.roberta.encoder.layer.1.attention.self.value.weight', 'scorer.roberta.encoder.layer.1.intermediate.dense.bias', 'scorer.roberta.encoder.layer.1.intermediate.dense.weight', 'scorer.roberta.encoder.layer.1.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.1.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.1.output.dense.bias', 'scorer.roberta.encoder.layer.1.output.dense.weight', 'scorer.roberta.encoder.layer.10.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.10.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.10.attention.output.dense.bias', 'scorer.roberta.encoder.layer.10.attention.output.dense.weight', 'scorer.roberta.encoder.layer.10.attention.self.key.bias', 'scorer.roberta.encoder.layer.10.attention.self.key.weight', 'scorer.roberta.encoder.layer.10.attention.self.query.bias', 'scorer.roberta.encoder.layer.10.attention.self.query.weight', 'scorer.roberta.encoder.layer.10.attention.self.value.bias', 'scorer.roberta.encoder.layer.10.attention.self.value.weight', 'scorer.roberta.encoder.layer.10.intermediate.dense.bias', 'scorer.roberta.encoder.layer.10.intermediate.dense.weight', 'scorer.roberta.encoder.layer.10.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.10.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.10.output.dense.bias', 'scorer.roberta.encoder.layer.10.output.dense.weight', 'scorer.roberta.encoder.layer.11.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.11.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.11.attention.output.dense.bias', 'scorer.roberta.encoder.layer.11.attention.output.dense.weight', 'scorer.roberta.encoder.layer.11.attention.self.key.bias', 'scorer.roberta.encoder.layer.11.attention.self.key.weight', 'scorer.roberta.encoder.layer.11.attention.self.query.bias', 'scorer.roberta.encoder.layer.11.attention.self.query.weight', 'scorer.roberta.encoder.layer.11.attention.self.value.bias', 'scorer.roberta.encoder.layer.11.attention.self.value.weight', 'scorer.roberta.encoder.layer.11
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Early stopping enabled with patience: 3
+/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py:58: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `MarginRankingTrainer.__init__`. Use `processing_class` instead.
+  super().__init__(*args, **kwargs)
+Starting training...
+  0%|▍                                                                                                                                                       | 50/17520 [07:26<5:10:25,  1.07s/it]early stopping required metric_for_best_model, but did not find eval_loss so early stopping is disabled
+{'loss': 1.0289, 'grad_norm': 73.59215545654297, 'learning_rate': 1.0273972602739726e-07, 'epoch': 0.0}
+{'loss': 0.9284, 'grad_norm': 73.27859497070312, 'learning_rate': 2.1689497716894978e-07, 'epoch': 0.0}
+{'loss': 1.1418, 'grad_norm': 76.69115447998047, 'learning_rate': 3.310502283105023e-07, 'epoch': 0.01}
+{'loss': 0.9727, 'grad_norm': 76.98400115966797, 'learning_rate': 4.452054794520548e-07, 'epoch': 0.01}
+{'loss': 1.0091, 'grad_norm': 0.0, 'learning_rate': 5.593607305936073e-07, 'epoch': 0.01}
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1171/1171 [06:33<00:00,  2.97it/s]Error executing job with overrides: ['logging.run_name=Cross_BGE_M3_RandomNeg', 'model.type=cross_encoder', 'model.name=BAAI/bge-reranker-v2-m3', 'model.max_length=2048', 'data.train_file=data/processed/training_dataset_abstract_cleaned_v3.csv', 'data.format=triplet', 'training.batch_size=1', '+training.gradient_accumulation_steps=32', 'training.learning_rate=1e-5', 'training.loss_type=margin_rank', 'training.margin=1.0', 'training.epochs=3', 'training.save_total_limit=1']
+{'eval_runtime': 393.2253, 'eval_samples_per_second': 2.978, 'eval_steps_per_second': 2.978, 'epoch': 0.01}
+Traceback (most recent call last):                                                                                                                                                                
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3165, in _determine_best_metric
+    metric_value = metrics[metric_to_check]
+KeyError: 'eval_loss'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 305, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2627, in _inner_training_loop
+    self._maybe_log_save_evaluate(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3097, in _maybe_log_save_evaluate
+    is_new_best_metric = self._determine_best_metric(metrics=metrics, trial=trial)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3167, in _determine_best_metric
+    raise KeyError(
+KeyError: "The `metric_for_best_model` training argument is set to 'eval_loss', which is not found in the evaluation metrics. The available evaluation metrics are: ['eval_runtime', 'eval_samples_per_second', 'eval_steps_per_second', 'epoch']. Consider changing the `metric_for_best_model` via the TrainingArguments."
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

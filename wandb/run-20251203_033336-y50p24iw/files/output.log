@@ -1,0 +1,79 @@
+Loading dataset from: data/processed/training_dataset_abstract_cleaned_v3.csv
+Converting dataset to Triplets (Anchor, Positive, Negative)...
+Performing Group Shuffle Split based on 'anchor' (or 'abstract_a')...
+Train set: 5840, Validation set: 1171
+Tokenizing...
+Map (num_proc=4): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5840/5840 [00:04<00:00, 1442.66 examples/s]
+Map (num_proc=4): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1171/1171 [00:01<00:00, 904.13 examples/s]
+Loading model: BAAI/bge-reranker-v2-m3
+Some weights of CrossEncoderMarginModel were not initialized from the model checkpoint at BAAI/bge-reranker-v2-m3 and are newly initialized: ['scorer.classifier.dense.bias', 'scorer.classifier.dense.weight', 'scorer.classifier.out_proj.bias', 'scorer.classifier.out_proj.weight', 'scorer.roberta.embeddings.LayerNorm.bias', 'scorer.roberta.embeddings.LayerNorm.weight', 'scorer.roberta.embeddings.position_embeddings.weight', 'scorer.roberta.embeddings.token_type_embeddings.weight', 'scorer.roberta.embeddings.word_embeddings.weight', 'scorer.roberta.encoder.layer.0.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.0.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.0.attention.output.dense.bias', 'scorer.roberta.encoder.layer.0.attention.output.dense.weight', 'scorer.roberta.encoder.layer.0.attention.self.key.bias', 'scorer.roberta.encoder.layer.0.attention.self.key.weight', 'scorer.roberta.encoder.layer.0.attention.self.query.bias', 'scorer.roberta.encoder.layer.0.attention.self.query.weight', 'scorer.roberta.encoder.layer.0.attention.self.value.bias', 'scorer.roberta.encoder.layer.0.attention.self.value.weight', 'scorer.roberta.encoder.layer.0.intermediate.dense.bias', 'scorer.roberta.encoder.layer.0.intermediate.dense.weight', 'scorer.roberta.encoder.layer.0.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.0.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.0.output.dense.bias', 'scorer.roberta.encoder.layer.0.output.dense.weight', 'scorer.roberta.encoder.layer.1.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.1.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.1.attention.output.dense.bias', 'scorer.roberta.encoder.layer.1.attention.output.dense.weight', 'scorer.roberta.encoder.layer.1.attention.self.key.bias', 'scorer.roberta.encoder.layer.1.attention.self.key.weight', 'scorer.roberta.encoder.layer.1.attention.self.query.bias', 'scorer.roberta.encoder.layer.1.attention.self.query.weight', 'scorer.roberta.encoder.layer.1.attention.self.value.bias', 'scorer.roberta.encoder.layer.1.attention.self.value.weight', 'scorer.roberta.encoder.layer.1.intermediate.dense.bias', 'scorer.roberta.encoder.layer.1.intermediate.dense.weight', 'scorer.roberta.encoder.layer.1.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.1.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.1.output.dense.bias', 'scorer.roberta.encoder.layer.1.output.dense.weight', 'scorer.roberta.encoder.layer.10.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.10.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.10.attention.output.dense.bias', 'scorer.roberta.encoder.layer.10.attention.output.dense.weight', 'scorer.roberta.encoder.layer.10.attention.self.key.bias', 'scorer.roberta.encoder.layer.10.attention.self.key.weight', 'scorer.roberta.encoder.layer.10.attention.self.query.bias', 'scorer.roberta.encoder.layer.10.attention.self.query.weight', 'scorer.roberta.encoder.layer.10.attention.self.value.bias', 'scorer.roberta.encoder.layer.10.attention.self.value.weight', 'scorer.roberta.encoder.layer.10.intermediate.dense.bias', 'scorer.roberta.encoder.layer.10.intermediate.dense.weight', 'scorer.roberta.encoder.layer.10.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.10.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.10.output.dense.bias', 'scorer.roberta.encoder.layer.10.output.dense.weight', 'scorer.roberta.encoder.layer.11.attention.output.LayerNorm.bias', 'scorer.roberta.encoder.layer.11.attention.output.LayerNorm.weight', 'scorer.roberta.encoder.layer.11.attention.output.dense.bias', 'scorer.roberta.encoder.layer.11.attention.output.dense.weight', 'scorer.roberta.encoder.layer.11.attention.self.key.bias', 'scorer.roberta.encoder.layer.11.attention.self.key.weight', 'scorer.roberta.encoder.layer.11.attention.self.query.bias', 'scorer.roberta.encoder.layer.11.attention.self.query.weight', 'scorer.roberta.encoder.layer.11.attention.self.value.bias', 'scorer.roberta.encoder.layer.11.attention.self.value.weight', 'scorer.roberta.encoder.layer.11
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Early stopping enabled with patience: 3
+/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py:58: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `MarginRankingTrainer.__init__`. Use `processing_class` instead.
+  super().__init__(*args, **kwargs)
+Starting training...
+  0%|                                                                                                                                                                    | 0/4380 [00:00<?, ?it/s]Error executing job with overrides: ['logging.run_name=Cross_BGE_M3_RandomNeg', 'model.type=cross_encoder', 'model.name=BAAI/bge-reranker-v2-m3', 'model.max_length=2048', 'data.train_file=data/processed/training_dataset_abstract_cleaned_v3.csv', 'data.format=triplet', 'training.batch_size=4', '+training.gradient_accumulation_steps=8', 'training.learning_rate=1e-5', 'training.loss_type=margin_rank', 'training.margin=1.0', 'training.epochs=3', 'training.save_total_limit=1']
+Traceback (most recent call last):
+  File "/home/kurokawa/Projects/S2ORCRanker/scripts/run_train.py", line 305, in main
+    trainer.train()
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/trainer.py", line 3736, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+  File "/home/kurokawa/Projects/S2ORCRanker/src/training/trainer.py", line 66, in compute_loss
+    outputs = model(**inputs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/Projects/S2ORCRanker/src/modeling/cross_encoder.py", line 38, in forward
+    output_pos = self.scorer(input_ids=input_ids, attention_mask=attention_mask)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 1331, in forward
+    outputs = self.roberta(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 979, in forward
+    encoder_outputs = self.encoder(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 632, in forward
+    layer_outputs = layer_module(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 521, in forward
+    self_attention_outputs = self.attention(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 448, in forward
+    self_outputs = self.self(
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/transformers/models/xlm_roberta/modeling_xlm_roberta.py", line 268, in forward
+    attention_probs = self.dropout(attention_probs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/modules/dropout.py", line 73, in forward
+    return F.dropout(input, self.p, self.training, self.inplace)
+  File "/home/kurokawa/.local/lib/python3.10/site-packages/torch/nn/functional.py", line 1418, in dropout
+    _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacity of 47.42 GiB of which 408.94 MiB is free. Including non-PyTorch memory, this process has 46.48 GiB memory in use. Of the allocated memory 46.09 GiB is allocated by PyTorch, and 84.65 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

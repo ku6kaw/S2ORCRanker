@@ -72,6 +72,24 @@ class MarginRankingTrainer(Trainer):
 
         return (loss, outputs) if return_outputs else loss
     
+    def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=None):
+        """
+        評価ループで1バッチごとの予測（とLoss計算）を行う関数。
+        デフォルトではモデルがlossを返さないとloss=Noneになるため、
+        ここで明示的に compute_loss を呼ぶ。
+        """
+        inputs = self._prepare_inputs(inputs)
+        
+        with torch.no_grad():
+            with self.compute_loss_context_manager():
+                loss, outputs = self.compute_loss(model, inputs, return_outputs=True)
+                loss = loss.mean().detach()
+
+        if prediction_loss_only:
+            return (loss, None, None)
+
+        return (loss, outputs.logits, None)
+    
 class MultipleNegativesRankingTrainer(Trainer):
     """
     Bi-Encoder用: Multiple Negatives Ranking Loss (MNRL)
