@@ -1,0 +1,130 @@
+_wandb:
+    value:
+        cli_version: 0.23.0
+        e:
+            jhhxn8r3dvstgvcrcs23ufk9e9cp95gb:
+                args:
+                    - model.path=models/checkpoints/cross_encoder/Cross_BGE_M3_RandomNeg_LowLR/best_model
+                    - model.base_name=BAAI/bge-reranker-v2-m3
+                    - model.batch_size=16
+                    - data.candidates_file=data/processed/embeddings/SPECTER2_HardNeg_round2/candidates_for_reranking.json
+                    - data.output_dir=data/processed/embeddings/SPECTER2_HardNeg_round2
+                    - evaluation.result_file=evaluation_results_reranked_BGE_Random.json
+                codePath: scripts/rerank.py
+                codePathLocal: scripts/rerank.py
+                cpu_count: 24
+                cpu_count_logical: 32
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "982820896768"
+                        used: "895572979712"
+                email: reoreo01.123@gmail.com
+                executable: /usr/bin/python
+                git:
+                    commit: 4c53c151b433eee02fbb5ad1c35fa1983a099f95
+                    remote: https://github.com/ku6kaw/S2ORCRanker
+                gpu: NVIDIA RTX A6000
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 10752
+                      memoryTotal: "51527024640"
+                      name: NVIDIA RTX A6000
+                      uuid: GPU-b6e6e0e3-0979-08d4-7b26-7ebfb7c03ea4
+                host: lssgpu
+                memory:
+                    total: "67242205184"
+                os: Linux-6.8.0-60-generic-x86_64-with-glibc2.35
+                program: /home/kurokawa/Projects/S2ORCRanker/scripts/rerank.py
+                python: CPython 3.10.12
+                root: /home/kurokawa/Projects/S2ORCRanker
+                startedAt: "2025-12-03T16:23:13.387655Z"
+                writerId: jhhxn8r3dvstgvcrcs23ufk9e9cp95gb
+        m: []
+        python_version: 3.10.12
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 50
+                - 53
+                - 71
+            "2":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 50
+                - 53
+                - 71
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+            "4": 3.10.12
+            "5": 0.23.0
+            "6": 4.51.3
+            "12": 0.23.0
+            "13": linux-x86_64
+data:
+    value:
+        candidates_file: data/processed/embeddings/SPECTER2_HardNeg_round2/candidates_for_reranking.json
+        db_path: data/processed/s2orc_filtered.db
+        output_dir: data/processed/embeddings/SPECTER2_HardNeg_round2
+evaluation:
+    value:
+        k_values:
+            - 1
+            - 5
+            - 10
+            - 20
+            - 30
+            - 40
+            - 50
+            - 60
+            - 70
+            - 80
+            - 90
+            - 100
+            - 110
+            - 120
+            - 130
+            - 140
+            - 150
+            - 160
+            - 170
+            - 180
+            - 190
+            - 200
+            - 210
+            - 220
+            - 230
+            - 240
+            - 250
+            - 260
+            - 270
+            - 280
+            - 290
+            - 300
+        result_file: evaluation_results_reranked_BGE_Random.json
+logging:
+    value:
+        project_name: s2orc-ranker
+        run_name: eval_reranker_cross_encoder
+        tags:
+            - evaluation
+            - reranker
+            - cross-encoder
+        use_wandb: true
+model:
+    value:
+        base_name: BAAI/bge-reranker-v2-m3
+        batch_size: 16
+        max_length: 2048
+        path: models/checkpoints/cross_encoder/Cross_BGE_M3_RandomNeg_LowLR/best_model
+seed:
+    value: 42

@@ -1,0 +1,6 @@
+Loading candidates from: data/processed/embeddings/SPECTER2_HardNeg_round2/candidates_for_reranking.json
+Loading Cross-Encoder: models/checkpoints/cross_encoder/Cross_BGE_M3_RandomNeg_LowLR/best_model
+Reranking Queries: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [43:11:17<00:00, 3109.56s/it]
+
+=== Reranking Results ===
+MRR: 0.0002
