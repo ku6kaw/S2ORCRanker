@@ -61,13 +61,10 @@ def load_queries_from_jsonl(jsonl_path, queries_per_dataset=None, seed=42):
 
 def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch_size=100000):
     num_docs = corpus_embeddings.shape[0]
-    # float16のままだと精度が落ちる可能性があるため、計算時にfloat32へキャストしても良いが、
-    # GPUメモリ節約のためfloat16で計算し、必要ならtensor作成時にdtypeを指定する
-    # ここでは元のnumpy配列の型に従う
     gt_vecs = torch.tensor(corpus_embeddings[gt_indices], device=device) 
     q_vec_t = torch.tensor(query_vec, device=device).unsqueeze(1)
     
-    # 型を合わせる（q_vecがfloat32なら合わせる）
+    # 型合わせ
     if gt_vecs.dtype != q_vec_t.dtype:
         gt_vecs = gt_vecs.to(q_vec_t.dtype)
 
@@ -77,6 +74,7 @@ def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch
     for i in range(0, num_docs, batch_size):
         end = min(i + batch_size, num_docs)
         batch_vecs = torch.tensor(corpus_embeddings[i:end], device=device)
+        # 型合わせ
         if batch_vecs.dtype != q_vec_t.dtype:
             batch_vecs = batch_vecs.to(q_vec_t.dtype)
             
@@ -88,7 +86,7 @@ def calculate_full_ranks(query_vec, gt_indices, corpus_embeddings, device, batch
 
 @hydra.main(config_path="../configs", config_name="evaluate", version_base=None)
 def main(cfg: DictConfig):
-    print("=== Starting Evaluation (float16 Support) ===")
+    print("=== Starting Evaluation (Auto Precision Detect) ===")
     print(OmegaConf.to_yaml(cfg))
     
     if cfg.logging.use_wandb:
@@ -110,22 +108,39 @@ def main(cfg: DictConfig):
     
     doi_to_index = {doi: i for i, doi in enumerate(doi_list)}
     num_vectors = len(doi_list)
-    
-    print(f"Loading embeddings (mmap) from {embeddings_path}...")
     hidden_size = 768 
     
-    # ▼▼▼ 修正: float16 で読み込む ▼▼▼
+    print(f"Loading embeddings (mmap) from {embeddings_path}...")
+    
+    # ▼▼▼ 自動判定ロジック ▼▼▼
+    file_size = os.path.getsize(embeddings_path)
+    expected_size_32 = num_vectors * hidden_size * 4
+    expected_size_16 = num_vectors * hidden_size * 2
+    
+    # 許容誤差(バイト)
+    margin = 1024 * 1024 
+    
+    if abs(file_size - expected_size_32) < margin:
+        dtype = 'float32'
+        print("   Detected format: float32 (Single Precision)")
+    elif abs(file_size - expected_size_16) < margin:
+        dtype = 'float16'
+        print("   Detected format: float16 (Half Precision)")
+    else:
+        print(f"   ⚠️ Warning: File size {file_size} does not match float32 ({expected_size_32}) or float16 ({expected_size_16}). Defaulting to float32.")
+        dtype = 'float32'
+
     corpus_embeddings = np.memmap(
         embeddings_path, 
-        dtype='float16',  # float32 -> float16
+        dtype=dtype, 
         mode='r', 
         shape=(num_vectors, hidden_size)
     )
+    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     
     index = None
     if cfg.evaluation.use_faiss:
         print("Building Faiss Index for candidate retrieval...")
-        # Faissのインデックスは通常float32
         index = faiss.IndexFlatIP(hidden_size)
         if cfg.evaluation.gpu_search and torch.cuda.is_available():
             try:
@@ -136,7 +151,7 @@ def main(cfg: DictConfig):
         
         batch_size = 50000
         for i in tqdm(range(0, num_vectors, batch_size), desc="Indexing"):
-            # ▼▼▼ 修正: Faissに入れる前に float32 に変換 ▼▼▼
+            # 常にfloat32に変換してFaissに追加
             batch_vecs = np.array(corpus_embeddings[i : i + batch_size]).astype('float32')
             faiss.normalize_L2(batch_vecs)
             index.add(batch_vecs)
@@ -212,7 +227,6 @@ def main(cfg: DictConfig):
             continue
 
         if cfg.evaluation.get("calc_full_rank", False):
-            # 全件ランク計算
             all_gt_ranks = calculate_full_ranks(q_vec, gt_indices, corpus_embeddings, device, batch_size=scan_batch_size)
             all_gt_ranks.sort()
             first_hit_rank = all_gt_ranks[0]
@@ -224,7 +238,6 @@ def main(cfg: DictConfig):
                     all_gt_ranks.append(rank)
                     break
             if first_hit_rank == 0:
-                # 圏外
                 all_gt_ranks = [0] * len(ground_truth_dois)
 
         ranks.append(first_hit_rank)
