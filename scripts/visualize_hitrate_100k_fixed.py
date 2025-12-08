@@ -160,7 +160,7 @@ def plot_full_recall_curves(df):
         drawstyle='steps-post' 
     )
 
-    # plt.xscale("log")
+    plt.xscale("log")
     plt.xlabel("Rank", fontsize=14)
     plt.ylabel("HitRate", fontsize=14)
     plt.title("HitRate@k", fontsize=16)
@@ -172,7 +172,7 @@ def plot_full_recall_curves(df):
     
     plt.legend(title="Models", fontsize=12, title_fontsize=12, loc="upper left")
     
-    output_file = "HitRate@k_fixed_v2.png"
+    output_file = "HitRate@k_fixed_v2_log.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Graph saved to {output_file}")
 
