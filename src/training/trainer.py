@@ -15,7 +15,11 @@ class ContrastiveTrainer(Trainer):
         self.margin = margin
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        labels = inputs.pop("labels")
+        if "labels" in inputs:
+            labels = inputs.pop("labels")
+        else:
+            labels = None # ContrastiveTrainerの仕様によってはlabelsがない場合も考慮
+
         outputs = model(**inputs)
         
         # SiameseBiEncoder(head_type="none") は logits=(vec_a, vec_b) を返す
@@ -52,31 +56,66 @@ class BiEncoderPairTrainer(Trainer):
 class MarginRankingTrainer(Trainer):
     """
     Cross-Encoder用: Margin Ranking Loss を使用するTrainer。
-    (Pos, Neg) のTriplet入力を期待する。
+    Datasetからは {input_ids_pos, ..., input_ids_neg, ...} が返ってくる想定。
     """
     def __init__(self, *args, margin=1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.margin = margin
         self.loss_fct = nn.MarginRankingLoss(margin=self.margin)
 
+    def _get_logits(self, outputs):
+        """モデル出力から安全にlogitsを取り出すヘルパー関数"""
+        if hasattr(outputs, "logits"):
+            logits = outputs.logits
+        elif isinstance(outputs, tuple):
+            logits = outputs[0]
+        else:
+            logits = outputs
+            
+        # 万が一 logits 自体がタプルの場合も考慮
+        if isinstance(logits, tuple):
+            logits = logits[0]
+            
+        return logits
+
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         if "labels" in inputs:
             inputs.pop("labels")
             
-        outputs = model(**inputs)
-        # CrossEncoderMarginModelは (pos_score, neg_score) を返す
-        score_pos, score_neg = outputs.logits
-        
-        target = torch.ones_like(score_pos)
-        loss = self.loss_fct(score_pos, score_neg, target)
+        # 1. Positive Pair の推論
+        pos_inputs = {
+            "input_ids": inputs["input_ids_pos"],
+            "attention_mask": inputs["attention_mask_pos"]
+        }
+        if "token_type_ids_pos" in inputs:
+            pos_inputs["token_type_ids"] = inputs["token_type_ids_pos"]
 
-        return (loss, outputs) if return_outputs else loss
+        pos_outputs = model(**pos_inputs)
+        pos_logits = self._get_logits(pos_outputs) # ★修正: 安全に取り出す
+        pos_scores = pos_logits.squeeze(-1) 
+
+        # 2. Negative Pair の推論
+        neg_inputs = {
+            "input_ids": inputs["input_ids_neg"],
+            "attention_mask": inputs["attention_mask_neg"]
+        }
+        if "token_type_ids_neg" in inputs:
+            neg_inputs["token_type_ids"] = inputs["token_type_ids_neg"]
+
+        neg_outputs = model(**neg_inputs)
+        neg_logits = self._get_logits(neg_outputs) # ★修正: 安全に取り出す
+        neg_scores = neg_logits.squeeze(-1)
+
+        # 3. Loss 計算
+        # target=1 means pos should be higher than neg
+        target = torch.ones_like(pos_scores)
+        loss = self.loss_fct(pos_scores, neg_scores, target)
+
+        return (loss, pos_outputs) if return_outputs else loss
     
     def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=None):
         """
-        評価ループで1バッチごとの予測（とLoss計算）を行う関数。
-        デフォルトではモデルがlossを返さないとloss=Noneになるため、
-        ここで明示的に compute_loss を呼ぶ。
+        評価ループ用
         """
         inputs = self._prepare_inputs(inputs)
         
@@ -87,18 +126,18 @@ class MarginRankingTrainer(Trainer):
 
         if prediction_loss_only:
             return (loss, None, None)
-
-        return (loss, outputs.logits, None)
+        
+        # logitsを取得して返す
+        logits = self._get_logits(outputs)
+        return (loss, logits, None)
     
 class MultipleNegativesRankingTrainer(Trainer):
     """
     Bi-Encoder用: Multiple Negatives Ranking Loss (MNRL)
-    (Anchor, Positive, HardNegative) の3つを受け取り、
-    バッチ内全ての他サンプル + HardNegative を負例として学習する。
     """
     def __init__(self, *args, scale=20.0, **kwargs):
         super().__init__(*args, **kwargs)
-        self.scale = scale # 類似度をスケーリングする値 (Temperatureの逆数)
+        self.scale = scale 
         self.cross_entropy = nn.CrossEntropyLoss()
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
@@ -107,8 +146,6 @@ class MultipleNegativesRankingTrainer(Trainer):
         
         outputs = model(**inputs)
         
-        # SiameseBiEncoderは head_type="none" の場合、(vec_a, vec_b, vec_c) を返す想定
-        # vec_c (Negative) がない場合は (vec_a, vec_b)
         if isinstance(outputs.logits, tuple) and len(outputs.logits) == 3:
             vec_a, vec_p, vec_n = outputs.logits
             has_hard_neg = True
@@ -116,27 +153,16 @@ class MultipleNegativesRankingTrainer(Trainer):
             vec_a, vec_p = outputs.logits
             has_hard_neg = False
 
-        # 1. AnchorとPositive/Negativeの類似度行列を計算
-        # (Batch, Dim) @ (Dim, Batch) -> (Batch, Batch)
-        # scores_p[i][j] = Anchor[i] と Positive[j] の類似度
         scores_p = torch.matmul(vec_a, vec_p.transpose(0, 1)) * self.scale
         
         if has_hard_neg:
-            # scores_n[i][j] = Anchor[i] と HardNegative[j] の類似度
             scores_n = torch.matmul(vec_a, vec_n.transpose(0, 1)) * self.scale
-            
-            # 結合: [Positives (Batch), HardNegatives (Batch)]
-            # 横方向に結合 -> (Batch, Batch * 2)
             scores = torch.cat([scores_p, scores_n], dim=1)
         else:
             scores = scores_p
 
-        # 2. 正解ラベルの作成
-        # i番目のAnchorの正解は、i番目のPositive (つまり対角成分)
-        # ラベルは [0, 1, 2, ..., batch_size-1]
         labels = torch.arange(scores.size(0), device=scores.device)
         
-        # 3. Cross Entropy Loss
         loss = self.cross_entropy(scores, labels)
 
         return (loss, outputs) if return_outputs else loss

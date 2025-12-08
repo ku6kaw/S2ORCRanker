@@ -17,138 +17,42 @@ sys.path.append(os.getcwd())
 
 from src.modeling.bi_encoder import SiameseBiEncoder
 from src.modeling.cross_encoder import CrossEncoderMarginModel
-from src.training.dataset import TextRankingDataset
+from src.training.dataset import TextRankingDataset, CrossEncoderTripletCollator # ★修正
 from src.training.trainer import BiEncoderPairTrainer, MarginRankingTrainer, ContrastiveTrainer, MultipleNegativesRankingTrainer
-
-def create_optimizer_grouped_parameters(model, base_lr, head_lr, weight_decay):
-    """
-    モデルのパラメータを4つのグループに分け、学習率とWeight Decayを適用する。
-    1. Head (Decayあり)
-    2. Head (Decayなし)
-    3. Base (Decayあり)
-    4. Base (Decayなし)
-    """
-    # Weight Decayを適用しないパラメータ名
-    no_decay = ["bias", "LayerNorm.weight"]
-    
-    # 分類ヘッドとみなすパラメータ名のキーワード
-    # Bi-Encoder: "classifier_head"
-    # Cross-Encoder (Longformer): "scorer.classifier" 等
-    head_keywords = ["classifier", "head", "score"]
-
-    optimizer_grouped_parameters = []
-    
-    # 全パラメータを走査して振り分け
-    head_params_decay = []
-    head_params_no_decay = []
-    base_params_decay = []
-    base_params_no_decay = []
-
-    for name, param in model.named_parameters():
-        if not param.requires_grad:
-            continue
-        
-        # ヘッドかどうか判定
-        is_head = any(k in name for k in head_keywords)
-        # Decayなしかどうか判定
-        is_no_decay = any(nd in name for nd in no_decay)
-
-        if is_head:
-            if is_no_decay:
-                head_params_no_decay.append(param)
-            else:
-                head_params_decay.append(param)
-        else:
-            if is_no_decay:
-                base_params_no_decay.append(param)
-            else:
-                base_params_decay.append(param)
-
-    # グループ定義の作成
-    if head_params_decay:
-        optimizer_grouped_parameters.append({
-            "params": head_params_decay,
-            "weight_decay": weight_decay,
-            "lr": head_lr,
-            "name": "head_decay"
-        })
-    if head_params_no_decay:
-        optimizer_grouped_parameters.append({
-            "params": head_params_no_decay,
-            "weight_decay": 0.0,
-            "lr": head_lr,
-            "name": "head_no_decay"
-        })
-    if base_params_decay:
-        optimizer_grouped_parameters.append({
-            "params": base_params_decay,
-            "weight_decay": weight_decay,
-            "lr": base_lr,
-            "name": "base_decay"
-        })
-    if base_params_no_decay:
-        optimizer_grouped_parameters.append({
-            "params": base_params_no_decay,
-            "weight_decay": 0.0,
-            "lr": base_lr,
-            "name": "base_no_decay"
-        })
-
-    return optimizer_grouped_parameters
+from src.utils.optimization import create_optimizer_grouped_parameters
 
 def compute_metrics(eval_pred):
     """
-    Bi-Encoder (BCE Loss) 用の評価指標計算
+    Bi-Encoder (BCE Loss / Contrastive) 用の評価指標計算
+    Cross-Encoder (MarginRankingLoss) では通常metrics計算は難しいのでスキップされることが多いが、
+    便宜上エラーにならないようにしておく。
     """
     predictions, labels = eval_pred
-    # predictionsはロジット(スコア)なので、0を閾値として0/1に変換
-    # (Sigmoidを通すと 0.5 が閾値になるのと同義)
+    
+    # predictionsがタプルの場合 (Contrastive, MarginRankingなど)
+    if isinstance(predictions, tuple):
+        # MarginRankingTrainerは (pos_score, neg_score) を返すよう実装した場合
+        # ここでの精度計算は定義が難しいのでダミーを返すか、
+        # Pos > Neg となっている割合（Accuracy）を計算する
+        pos_scores = predictions[0] # (batch,)
+        if len(predictions) > 1:
+            neg_scores = predictions[1] # (batch,)
+            # Pos > Neg なら正解 (1), 逆なら不正解 (0)
+            # numpy配列であることを想定
+            acc = (pos_scores > neg_scores).mean()
+            return {"accuracy": acc}
+        else:
+            return {}
+            
+    # 通常の分類 (Logits)
     preds = (predictions > 0).astype(int).reshape(-1)
-    labels = labels.astype(int).reshape(-1)
+    if labels is not None:
+        labels = labels.astype(int).reshape(-1)
+        acc = accuracy_score(labels, preds)
+        return {'accuracy': acc}
+    
+    return {}
 
-    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary', zero_division=0)
-    acc = accuracy_score(labels, preds)
-    
-    return {
-        'accuracy': acc,
-        'f1': f1,
-        'precision': precision,
-        'recall': recall
-    }
-
-
-    """
-    Contrastive Loss (距離学習) 用の評価指標計算。
-    距離が threshold 以下なら「類似（Positive）」と判定する。
-    """
-    # ContrastiveTrainerは (vec_a, vec_b) を返すので、これを受け取る必要があるが、
-    # Hugging Face Trainerの compute_metrics は (predictions, label_ids) を受け取る仕様。
-    # predictions は logits のタプルになるはず。
-    
-    logits, labels = eval_pred
-    # logits は (vec_a, vec_b) のタプル
-    vec_a = torch.tensor(logits[0])
-    vec_b = torch.tensor(logits[1])
-    
-    # 距離計算 (Euclidean)
-    distances = torch.nn.functional.pairwise_distance(vec_a, vec_b).numpy()
-    
-    # 予測: 距離が閾値以下なら 1 (Positive), それ以外は 0 (Negative)
-    # ※ Contrastiveでは「距離が近いほど似ている」ため
-    preds = (distances < threshold).astype(int)
-    labels = labels.astype(int).reshape(-1)
-
-    precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary', zero_division=0)
-    acc = accuracy_score(labels, preds)
-    
-    return {
-        'accuracy': acc,
-        'f1': f1,
-        'precision': precision,
-        'recall': recall,
-        'mean_distance': float(distances.mean()) # 平均距離もログに残すと便利
-    }
-    
 @hydra.main(config_path="../configs", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     print(f"=== Starting Training: {cfg.model.type} ===")
@@ -169,18 +73,19 @@ def main(cfg: DictConfig):
     print(f"Loading model: {cfg.model.name}")
     model_config = AutoConfig.from_pretrained(cfg.model.name)
     
-    # --- ★ Trainerとモデルの選択ロジック (修正) ---
+    # --- Trainerとモデルの選択ロジック ---
     compute_metrics_func = None
 
     if cfg.model.type == "cross_encoder":
-        # Cross-Encoderの場合
+        # Cross-Encoder (Reranker)
         model_config.num_labels = 1
         model = CrossEncoderMarginModel.from_pretrained(cfg.model.name, config=model_config)
         trainer_cls = MarginRankingTrainer
+        # Cross-Encoderでは正解率(Pos > Negの割合)を計算させるとモニタリングに良い
+        compute_metrics_func = compute_metrics
         
     else: # bi_encoder
         head_type = cfg.model.get("head_type", "ranknet")
-        # ★追加: 損失関数のタイプ設定 (デフォルトは互換性のため pair_score)
         loss_type = cfg.training.get("loss_type", "pair_score")
         
         print(f"Bi-Encoder Head: {head_type}, Loss: {loss_type}")
@@ -194,45 +99,32 @@ def main(cfg: DictConfig):
         adapter_name = cfg.model.get("adapter_name", None)
         if adapter_name:
             print(f"🔄 Loading Adapter: {adapter_name}")
-            
-            # adaptersライブラリで初期化
             adapters.init(model.bert)
+            try:
+                loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
+            except:
+                loaded_name = model.bert.load_adapter(adapter_name, set_active=True)
             
-            # アダプターをロードし、その内部名(例: '[PRX]')を取得
-            loaded_name = model.bert.load_adapter(adapter_name, source="hf", set_active=True)
-            
-            # 念のため明示的にアクティブ化
             model.bert.set_active_adapters(loaded_name)
             print(f"✅ Adapter '{loaded_name}' activated.")
             
             if cfg.model.get("freeze_base", False):
                 print("❄️  Freezing base model parameters (Training Adapter only)")
-                # 全パラメータを一旦凍結
                 for param in model.bert.parameters():
                     param.requires_grad = False
-                
-                # アダプター部分と分類ヘッド(もしあれば)のみ解凍
                 for name, param in model.named_parameters():
                     if "adapter" in name or "classifier_head" in name:
                         param.requires_grad = True
-                        
-                # 確認: 学習対象パラメータ数
-                trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-                all_params = sum(p.numel() for p in model.parameters())
-                print(f"   Trainable params: {trainable_params:,} / {all_params:,} ({100 * trainable_params / all_params:.2f}%)")
-        
+
         if loss_type == "mnrl":
-            # Multiple Negatives Ranking Loss
-            print("Using MultipleNegativesRankingTrainer (Batch Negatives)")
+            print("Using MultipleNegativesRankingTrainer")
             trainer_cls = MultipleNegativesRankingTrainer
-        
         elif head_type == "none":
-            # Contrastive
-            print("Using ContrastiveTrainer (Distance-based)")
+            print("Using ContrastiveTrainer")
             trainer_cls = ContrastiveTrainer
+            compute_metrics_func = compute_metrics
         else:
-            # RankNet / BCE
-            print("Using BiEncoderPairTrainer (Classification Head)")
+            print("Using BiEncoderPairTrainer")
             trainer_cls = BiEncoderPairTrainer
             compute_metrics_func = compute_metrics
 
@@ -269,18 +161,23 @@ def main(cfg: DictConfig):
         report_to="wandb" if cfg.logging.use_wandb else "none",
         run_name=cfg.logging.run_name, 
         remove_unused_columns=False,
-        metric_for_best_model="loss",
+        metric_for_best_model="loss", # MarginRankingLossは小さい方が良い
         greater_is_better=False,
+        gradient_accumulation_steps=cfg.training.get("gradient_accumulation_steps", 1)
     )
     
-    # ★ コールバックの準備
     callbacks = []
     if cfg.training.get("patience"):
         print(f"Early stopping enabled with patience: {cfg.training.patience}")
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=cfg.training.patience))
         
+    # ★追加: コレーターの準備
+    data_collator = None
+    if cfg.model.type == "cross_encoder":
+        print("Using CrossEncoderTripletCollator")
+        data_collator = CrossEncoderTripletCollator(tokenizer)
+
     # 6. Trainer初期化
-    # 共通の引数
     trainer_kwargs = {
         "model": model,
         "args": args,
@@ -289,16 +186,15 @@ def main(cfg: DictConfig):
         "tokenizer": tokenizer,
         "optimizers": (optimizer, None),
         "compute_metrics": compute_metrics_func,
-        "callbacks": callbacks
+        "callbacks": callbacks,
+        "data_collator": data_collator # ★追加
     }
 
-    # Trainerクラスに応じた追加引数
     if trainer_cls == MultipleNegativesRankingTrainer:
         trainer_kwargs["scale"] = cfg.training.get("scale", 20.0)
     elif trainer_cls in [ContrastiveTrainer, MarginRankingTrainer]:
         trainer_kwargs["margin"] = cfg.training.margin
     
-    # Trainer初期化
     trainer = trainer_cls(**trainer_kwargs)
     
     print("Starting training...")
