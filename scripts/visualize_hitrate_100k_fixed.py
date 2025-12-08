@@ -45,11 +45,11 @@ def find_details_data(directory):
     """
     # 優先順位リスト
     search_order = [
-        "evaluation_results_50q_100k.json",
         "candidates_for_reranking_50q_100k.json", # 50qの候補ファイル
-        "evaluation_results.json",
-        "candidates_for_reranking.json",     # 通常の候補ファイル
-        "*_evaluation_results.json"
+        # "evaluation_results_50q_100k.json",
+        # "evaluation_results.json",
+        # "candidates_for_reranking.json",     # 通常の候補ファイル
+        # "*_evaluation_results.json"
     ]
     
     for fname in search_order:
@@ -82,24 +82,39 @@ def load_recall_curve_data():
             
             ranks = []
             for item in details:
-                # キー名の揺れに対応
-                r = item.get("first_hit_rank_retriever", item.get("first_hit_rank", 0))
-                if r > 0:
-                    ranks.append(r)
+                # ========================================================
+                # 修正箇所: 保存されたランクを使わず、リストから再計算する
+                # ========================================================
+                candidates = item.get("retrieved_candidates", [])
+                gt_dois = set(item.get("ground_truth_dois", []))
+                
+                # リスト内で最も上位にある正解を探す
+                found_rank = -1
+                for i, doi in enumerate(candidates):
+                    if doi in gt_dois:
+                        found_rank = i + 1
+                        break
+                
+                # リストで見つかればその順位を、なければ保存された順位をフォールバックとして使う
+                if found_rank > 0:
+                    ranks.append(found_rank)
+                else:
+                    # リストにない場合、念のため保存された値も見てみる
+                    saved_rank = item.get("first_hit_rank_retriever", item.get("first_hit_rank", 0))
+                    if saved_rank > 0:
+                        ranks.append(saved_rank)
             
             ranks.sort()
             total_queries = len(details)
             if total_queries == 0: continue
 
-            # --- データポイントの生成 ---
-            # 1. 開始点
+            # --- データポイントの生成 (変更なし) ---
             all_data.append({
                 "Model": model_name,
                 "Rank": 1,
                 "Recall": 0.0
             })
 
-            # 2. イベント発生点
             for i, rank in enumerate(ranks):
                 recall = (i + 1) / total_queries
                 all_data.append({
@@ -108,7 +123,6 @@ def load_recall_curve_data():
                     "Recall": recall
                 })
             
-            # 3. 終了点
             final_recall = len(ranks) / total_queries
             all_data.append({
                 "Model": model_name,
@@ -158,7 +172,7 @@ def plot_full_recall_curves(df):
     
     plt.legend(title="Models", fontsize=12, title_fontsize=12, loc="upper left")
     
-    output_file = "HitRate@k_fixed.png"
+    output_file = "HitRate@k_fixed_v2.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Graph saved to {output_file}")
 
