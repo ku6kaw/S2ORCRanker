@@ -3,7 +3,7 @@
 import torch
 import numpy as np
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer
 import hydra
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
@@ -11,10 +11,12 @@ import json
 import os
 import sys
 
-# ★修正: Hydra起動前なので、標準の os.getcwd() を使用してプロジェクトルートをパスに追加
+# Hydra起動前なので、標準の os.getcwd() を使用してプロジェクトルートをパスに追加
 sys.path.append(os.getcwd())
 
 from src.utils.metrics import calculate_recall_at_k, calculate_mrr
+# ★追加: 学習時と同じモデルクラスをインポート（これが無いと重みが正しく読めません）
+from src.modeling.cross_encoder import CrossEncoderMarginModel 
 
 class ChunkingReranker:
     def __init__(self, model_path, base_name, max_length=512, stride=64, device=None):
@@ -23,18 +25,22 @@ class ChunkingReranker:
         self.stride = stride 
         
         print(f"Loading tokenizer: {base_name}")
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(base_name)
-        except:
-            # base_nameで失敗したらmodel_pathから読む
-            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(base_name)
         
         print(f"Loading model: {model_path}")
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_path, 
-            num_labels=1,
-            ignore_mismatched_sizes=True
-        )
+        try:
+            # 学習時と同じクラス構造でロードする（必須）
+            self.model = CrossEncoderMarginModel.from_pretrained(model_path)
+            print("✅ Successfully loaded with CrossEncoderMarginModel")
+        except Exception as e:
+            # ここに来る＝何かがおかしい（重み不一致など）
+            print(f"❌ Failed to load with CrossEncoderMarginModel: {e}")
+            print("⚠️ WARNING: Falling back to AutoModel. Precision may drop significantly!")
+            from transformers import AutoModelForSequenceClassification
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                model_path, num_labels=1, ignore_mismatched_sizes=True
+            )
+
         self.model.to(self.device)
         self.model.eval()
 
@@ -47,23 +53,40 @@ class ChunkingReranker:
                 query,
                 text,
                 max_length=self.max_length,
-                truncation=True,
+                truncation=True, # ここはTrueでOK（strideが効くのは自前でやる場合だが、HFのstride機能を使うならこれでOK）
                 padding="max_length",
                 stride=self.stride,
-                return_overflowing_tokens=True,
+                return_overflowing_tokens=True, # これにより、512を超える入力が複数のバッチに分割される
                 return_tensors="pt"
             )
         except Exception as e:
             print(f"Tokenization error: {e}")
             return -9999.0
         
+        # return_overflowing_tokens=True の場合、input_ids は [num_chunks, seq_len] になる
         input_ids = inputs["input_ids"].to(self.device)
         attention_mask = inputs["attention_mask"].to(self.device)
         
+        # モデルによっては token_type_ids が必要な場合がある（BERTなど）
+        token_type_ids = inputs.get("token_type_ids")
+        if token_type_ids is not None:
+            token_type_ids = token_type_ids.to(self.device)
+        
         with torch.no_grad():
-            outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-            logits = outputs.logits.squeeze(-1)
+            if token_type_ids is not None:
+                outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+            else:
+                outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+            
+            # CrossEncoderMarginModel は (score_pos, score_neg) のタプルを返す仕様にしたため
+            if isinstance(outputs.logits, tuple):
+                logits = outputs.logits[0] # score_pos
+            else:
+                logits = outputs.logits
 
+            logits = logits.squeeze(-1) # (num_chunks,)
+
+        # チャンクごとのスコアの最大値をとる (Max Pooling)
         if logits.numel() > 1:
             max_score = logits.max().item()
         else:
@@ -76,7 +99,7 @@ def main(cfg: DictConfig):
     print("=== Starting Reranking with Chunking ===")
     print(OmegaConf.to_yaml(cfg))
     
-    # パスの解決 (Hydraの作業ディレクトリ変更対策)
+    # パスの解決
     input_file = to_absolute_path(cfg.data.candidates_file)
     output_dir = to_absolute_path(cfg.data.output_dir)
     model_path = to_absolute_path(cfg.model.path)
@@ -89,7 +112,6 @@ def main(cfg: DictConfig):
     max_len = cfg.rerank.get("window_size", 512)
     stride = cfg.rerank.get("stride", 64)
     
-    # Reranker初期化
     reranker = ChunkingReranker(
         model_path=model_path,
         base_name=cfg.model.base_name,
@@ -104,7 +126,6 @@ def main(cfg: DictConfig):
     final_ranks = []
     reranked_details = []
 
-    # クエリごとに処理
     for item in tqdm(candidates_data, desc="Reranking Queries"):
         query_text = item["query_text"]
         ground_truth_dois = set(item["ground_truth_dois"])
@@ -112,18 +133,15 @@ def main(cfg: DictConfig):
         top_k_limit = cfg.rerank.get("top_k", len(item["retrieved_candidates"]))
         candidate_dois = item["retrieved_candidates"][:top_k_limit]
         
-        # Hydration済みのテキストを取得
         candidate_texts_map = item.get("candidate_texts", {})
         
         doc_texts = []
         for doi in candidate_dois:
-            # マップから取得。なければ空文字
             text = candidate_texts_map.get(doi, "")
             doc_texts.append(text)
 
         scores = []
         for doc_text in doc_texts:
-            # 本文がない場合はスコアを最低にする
             if not doc_text or len(doc_text) < 10:
                 scores.append(-9999.0)
                 continue
@@ -131,13 +149,11 @@ def main(cfg: DictConfig):
             score = reranker.predict(query_text, doc_text)
             scores.append(score)
             
-        # スコア順にソート
         scored_candidates = list(zip(candidate_dois, scores))
         scored_candidates.sort(key=lambda x: x[1], reverse=True)
         
         sorted_dois = [doi for doi, score in scored_candidates]
         
-        # 最初の正解の順位を探す
         first_hit_rank = 0
         for rank, doi in enumerate(sorted_dois, 1):
             if doi in ground_truth_dois:

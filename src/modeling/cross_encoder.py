@@ -2,30 +2,35 @@
 
 import torch
 import torch.nn as nn
-from transformers import LongformerPreTrainedModel, AutoModelForSequenceClassification
+from transformers import BertPreTrainedModel, BertModel
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-class CrossEncoderMarginModel(LongformerPreTrainedModel):
+class CrossEncoderMarginModel(BertPreTrainedModel):
     """
-    Longformerを使用したCross-Encoderモデル。
+    BERTベースのCross-Encoderモデル。
     MarginRankingLossでの学習用に、(positive_score, negative_score) のペアを出力します。
     """
     def __init__(self, config):
         super().__init__(config)
         
-        # AutoModelForSequenceClassificationを使ってバックボーンと分類ヘッドを初期化
-        # num_labels=1 とすることで、スカラー値（スコア）を出力するように設定
-        self.scorer = AutoModelForSequenceClassification.from_config(config)
+        # ★修正点: self.scorer ではなく、標準的な self.bert を使用
+        # これにより "allenai/specter2_base" の重みが自動的にマッチしてロードされる
+        self.bert = BertModel(config)
         
-        # 重みの初期化（親クラスのメソッドを使用）
-        self.post_init()
+        # 分類ヘッド (1次元出力)
+        self.classifier = nn.Linear(config.hidden_size, 1)
+        
+        # 重みの初期化 (Headなどはランダム初期化、BERT部分はロード時に上書きされる)
+        self.init_weights()
 
     def forward(
         self,
         input_ids=None,
         attention_mask=None,
+        token_type_ids=None,
         input_ids_neg=None,
         attention_mask_neg=None,
+        token_type_ids_neg=None,
         labels=None, 
         **kwargs
     ):
@@ -34,22 +39,34 @@ class CrossEncoderMarginModel(LongformerPreTrainedModel):
             input_ids, attention_mask: 正例ペア（Anchor + Positive）の入力
             input_ids_neg, attention_mask_neg: 負例ペア（Anchor + Negative）の入力
         """
-        # 正例ペアのスコア計算
-        output_pos = self.scorer(input_ids=input_ids, attention_mask=attention_mask)
-        score_positive = output_pos.logits
+        # --- 1. 正例ペアの推論 ---
+        outputs_pos = self.bert(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            return_dict=True
+        )
+        # [CLS]トークンのベクトルを取得
+        cls_pos = outputs_pos.last_hidden_state[:, 0, :]
+        # スコア計算
+        score_positive = self.classifier(cls_pos)
 
-        # 負例ペアのスコア計算（もし入力されていれば）
+        # --- 2. 負例ペアの推論（もし入力されていれば）---
         score_negative = None
         if input_ids_neg is not None:
-            output_neg = self.scorer(input_ids=input_ids_neg, attention_mask=attention_mask_neg)
-            score_negative = output_neg.logits
+            outputs_neg = self.bert(
+                input_ids=input_ids_neg,
+                attention_mask=attention_mask_neg,
+                token_type_ids=token_type_ids_neg,
+                return_dict=True
+            )
+            cls_neg = outputs_neg.last_hidden_state[:, 0, :]
+            score_negative = self.classifier(cls_neg)
 
-        # 損失計算はTrainer側（loss関数）で行うため、这里ではNoneを返すか、
-        # 必要ならここで計算してもよいが、今回はlogitsとしてペアを返す設計にする
-        
+        # lossはTrainerで計算するのでNone、logitsにペアを入れて返す
         return SequenceClassifierOutput(
             loss=None,
             logits=(score_positive, score_negative),
-            hidden_states=None,
-            attentions=None,
+            hidden_states=outputs_pos.hidden_states,
+            attentions=outputs_pos.attentions,
         )
