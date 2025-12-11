@@ -17,3 +17,5 @@ models/
 outputs
 
 wandb/
+
+lib/
